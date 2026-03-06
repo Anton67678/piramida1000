@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Пирамида 1000 v0.6.2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+
+:root {
+  --gold:   #c8a84b;
+  --gold2:  #e8cc78;
+  --gold3:  #f5e4a8;
+  --cream:  #f2ead8;
+  --red2:   #d94040;
+  --joker:  #9b59b6;
+  --joker2: #c39bd3;
+  --border: rgba(200,168,75,0.25);
+  --card-w: 58px;
+  --card-h: 82px;
+  --card-r: 5px;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:#0a0e0a;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%,#1a3a22 0%,transparent 60%),
+    repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(255,255,255,.007) 3px,rgba(255,255,255,.007) 4px);
+  min-height:100vh; font-family:'EB Garamond',Georgia,serif;
+  color:var(--cream); overflow-x:hidden; user-select:none;
+}
+header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:11px 22px; border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 100%);
+  position:relative; z-index:20;
+}
+.logo { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:900; color:var(--gold); letter-spacing:.2em; text-transform:uppercase; }
+.logo span { color:var(--gold3); font-style:italic; }
+
+/* LOBBY */
+#lobby-screen { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:calc(100vh - 52px); gap:20px; padding:28px; }
+.lobby-title { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; color:var(--gold2); text-align:center; text-shadow:0 0 40px rgba(200,168,75,.3); }
+.lobby-title small { display:block; font-family:'EB Garamond',serif; font-size:.9rem; font-style:italic; color:rgba(242,234,216,.4); letter-spacing:.2em; margin-top:4px; }
+.lobby-box { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px; padding:24px 28px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:14px; }
+.lobby-or { text-align:center; font-size:.75rem; color:rgba(242,234,216,.25); letter-spacing:.2em; text-transform:uppercase; }
+.room-code-display { font-family:'Playfair Display',serif; font-size:3rem; font-weight:900; color:var(--gold3); text-align:center; letter-spacing:.3em; text-shadow:0 0 30px rgba(200,168,75,.4); }
+.room-code-hint { text-align:center; font-size:.75rem; color:rgba(242,234,216,.35); font-style:italic; }
+#lobby-players { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+.lobby-player-row { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:4px; background:rgba(255,255,255,.04); border:1px solid var(--border); }
+.lobby-player-dot { width:8px; height:8px; border-radius:50%; background:var(--gold); flex-shrink:0; }
+.lobby-player-dot.empty { background:rgba(255,255,255,.1); }
+.lobby-player-name { font-family:'Playfair Display',serif; font-size:.82rem; color:var(--gold2); flex:1; }
+.lobby-player-name.empty { color:rgba(242,234,216,.2); font-style:italic; }
+.lobby-player-host { font-size:.6rem; color:var(--gold); background:rgba(200,168,75,.12); border:1px solid rgba(200,168,75,.3); border-radius:2px; padding:1px 5px; font-family:'Playfair Display',serif; }
+.lobby-status { text-align:center; font-size:.8rem; font-style:italic; color:rgba(242,234,216,.4); min-height:20px; }
+.lobby-status.good { color:#6ae8a0; }
+.lobby-status.warn { color:#e8a06a; }
+
+/* SETUP */
+#setup-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:calc(100vh - 52px); gap:24px; padding:32px; }
+.setup-title { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; color:var(--gold2); text-align:center; text-shadow:0 0 40px rgba(200,168,75,.3); }
+.setup-title small { display:block; font-family:'EB Garamond',serif; font-size:.95rem; font-style:italic; color:rgba(242,234,216,.4); letter-spacing:.2em; margin-top:4px; }
+.setup-box { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px; padding:26px 32px; width:100%; max-width:440px; display:flex; flex-direction:column; gap:16px; }
+.setup-label { font-family:'Playfair Display',serif; font-size:.72rem; letter-spacing:.15em; color:var(--gold); text-transform:uppercase; margin-bottom:5px; }
+.setup-input { background:rgba(0,0,0,.3); border:1px solid var(--border); border-radius:4px; padding:8px 12px; font-family:'EB Garamond',serif; font-size:.95rem; color:var(--cream); outline:none; width:100%; transition:border-color .2s; }
+.setup-input:focus { border-color:var(--gold); }
+.count-selector { display:flex; gap:8px; margin-top:5px; }
+.count-btn { width:42px; height:42px; border-radius:4px; border:1px solid var(--border); background:rgba(0,0,0,.2); color:var(--gold2); font-family:'Playfair Display',serif; font-size:1.1rem; cursor:pointer; transition:all .2s; }
+.count-btn.active,.count-btn:hover { background:rgba(200,168,75,.2); border-color:var(--gold); color:var(--gold3); }
+.player-row { display:flex; gap:8px; align-items:center; }
+.player-num { font-family:'Playfair Display',serif; font-size:.75rem; color:var(--gold); width:18px; }
+
+/* BUTTONS */
+.btn { font-family:'Playfair Display',serif; font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; padding:10px 22px; border-radius:4px; border:1px solid rgba(200,168,75,.5); background:linear-gradient(160deg,rgba(200,168,75,.18),rgba(200,168,75,.06)); color:var(--gold2); cursor:pointer; transition:all .2s; }
+.btn:hover { background:linear-gradient(160deg,rgba(200,168,75,.3),rgba(200,168,75,.1)); border-color:var(--gold2); }
+.btn:active { transform:scale(.97); }
+.btn.primary { border-color:var(--gold); background:linear-gradient(160deg,rgba(200,168,75,.35),rgba(200,168,75,.15)); }
+.btn.danger  { border-color:rgba(185,50,50,.5); background:rgba(185,50,50,.1); color:#e88080; }
+.btn.joker-btn { border-color:rgba(155,89,182,.5); background:rgba(155,89,182,.12); color:var(--joker2); }
+.btn.joker-btn:hover { background:rgba(155,89,182,.25); border-color:var(--joker2); }
+.btn.sm { padding:5px 12px; font-size:.68rem; }
+.btn:disabled { opacity:.3; cursor:not-allowed; }
+
+/* GAME */
+#game-screen { display:none; }
+#game-screen.bid-open { padding-right:300px; }
+
+#scoreboard { display:flex; border-bottom:1px solid var(--border); background:rgba(0,0,0,.3); overflow-x:auto; }
+.player-score { flex:1; min-width:100px; padding:7px 12px; border-right:1px solid var(--border); transition:background .3s; }
+.player-score:last-child { border-right:none; }
+.player-score.active-turn { background:rgba(200,168,75,.1); }
+.ps-name { font-family:'Playfair Display',serif; font-size:.68rem; letter-spacing:.1em; color:var(--gold); text-transform:uppercase; }
+.ps-score { font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700; color:var(--cream); }
+.ps-score.neg { color:var(--red2); }
+.ps-sub { font-size:.68rem; color:rgba(242,234,216,.35); font-style:italic; }
+.ps-badges { display:flex; gap:3px; margin-top:2px; flex-wrap:wrap; }
+.badge { font-size:.56rem; padding:1px 4px; border-radius:2px; font-family:'Playfair Display',serif; }
+.badge-ski    { background:rgba(100,150,255,.2); color:#8ab4ff; border:1px solid rgba(100,150,255,.3); }
+.badge-barrel { background:rgba(200,168,75,.2); color:var(--gold2); border:1px solid var(--border); }
+.badge-joker  { background:rgba(155,89,182,.2); color:var(--joker2); border:1px solid rgba(155,89,182,.35); }
+
+#table { display:flex; flex-direction:column; align-items:center; padding:12px 10px 4px; }
+#pyramid { display:flex; flex-direction:column; align-items:center; margin-bottom:12px; }
+.pyr-row { display:flex; gap:3px; margin-bottom:-30px; }
+
+/* CARDS */
+.card { width:var(--card-w); height:var(--card-h); border-radius:var(--card-r); flex-shrink:0; position:relative; transition:transform .15s,box-shadow .15s; cursor:default; }
+.card-inner { width:100%; height:100%; border-radius:var(--card-r); display:flex; flex-direction:column; justify-content:space-between; padding:3px 4px; border:1px solid rgba(255,255,255,.12); position:relative; overflow:hidden; }
+.card.face-down .card-inner { background:repeating-linear-gradient(135deg,#163020 0,#163020 4px,#112818 4px,#112818 8px); border-color:rgba(200,168,75,.35); cursor:not-allowed; }
+.card.face-down .card-inner::after { content:''; position:absolute; inset:3px; border:1px solid rgba(200,168,75,.22); border-radius:3px; }
+.card.open .card-inner { background:linear-gradient(160deg,#fdfaf2 0%,#f3ead8 100%); cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,.9); }
+.card.open:hover { transform:translateY(-4px); box-shadow:0 8px 18px rgba(0,0,0,.6); }
+.card.selected { transform:translateY(-8px); box-shadow:0 0 16px rgba(232,204,120,.5); }
+.card.selected .card-inner { outline:2px solid var(--gold2); outline-offset:-2px; }
+.card.blocked .card-inner { background:repeating-linear-gradient(135deg,#2a1a2a 0,#2a1a2a 4px,#1f1320 4px,#1f1320 8px) !important; border-color:rgba(155,89,182,.5) !important; cursor:not-allowed !important; }
+.card.blocked .card-inner::after { content:'🚫'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1.4rem; }
+.card.removed { pointer-events:none; animation:cremove .3s ease forwards; }
+@keyframes cremove { 0%{transform:scale(1) translateY(0);opacity:1} 60%{transform:scale(1.1) translateY(-10px);opacity:.6} 100%{transform:scale(.3) translateY(-28px);opacity:0} }
+.card.joker-card .card-inner { background:linear-gradient(135deg,#2d1b4e 0%,#1a0f2e 100%) !important; border-color:rgba(155,89,182,.6) !important; cursor:pointer; }
+.card.joker-card .rank-tl,.card.joker-card .suit-c,.card.joker-card .rank-br { color:var(--joker2) !important; }
+.card.joker-card:hover { transform:translateY(-4px); box-shadow:0 8px 18px rgba(155,89,182,.4); }
+.card.joker-card.selected { box-shadow:0 0 16px rgba(155,89,182,.7); }
+.card.joker-card.selected .card-inner { outline:2px solid var(--joker2); }
+
+.rank-tl { font-size:.6rem; line-height:1; font-family:'Playfair Display',serif; font-weight:700; }
+.suit-c  { font-size:1.25rem; position:absolute; top:50%; left:50%; transform:translate(-50%,-54%); }
+.rank-br { font-size:.6rem; line-height:1; transform:rotate(180deg); align-self:flex-end; font-family:'Playfair Display',serif; font-weight:700; }
+.red-card   .rank-tl,.red-card   .suit-c,.red-card   .rank-br { color:var(--red2); }
+.black-card .rank-tl,.black-card .suit-c,.black-card .rank-br { color:#1a1a1a; }
+
+#bottom-zone { display:flex; gap:16px; align-items:flex-start; padding:0 10px; margin-top:40px; flex-wrap:wrap; justify-content:center; }
+.zone-wrap { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.zone-label { font-family:'Playfair Display',serif; font-size:.56rem; letter-spacing:.12em; text-transform:uppercase; color:rgba(242,234,216,.3); }
+.hand-cards { display:flex; gap:4px; flex-wrap:wrap; }
+
+#status-bar { text-align:center; font-size:.85rem; font-style:italic; color:rgba(242,234,216,.5); padding:5px 14px 1px; min-height:24px; }
+#status-bar.warn { color:#e8a06a; }
+#status-bar.good { color:#6ae8a0; }
+#status-bar.info { color:var(--gold2); }
+#combo-display { text-align:center; padding:2px 14px; font-family:'Playfair Display',serif; font-size:.8rem; color:var(--gold2); letter-spacing:.07em; min-height:20px; }
+#controls { display:flex; gap:8px; justify-content:center; padding:6px 14px 12px; flex-wrap:wrap; }
+
+#progress-wrap { padding:0 22px 2px; }
+#progress-bar  { height:2px; background:rgba(255,255,255,.08); border-radius:1px; overflow:hidden; }
+#progress-fill { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold2)); transition:width .5s; }
+
+#combo-log { position:fixed; right:12px; top:65px; display:flex; flex-direction:column; gap:4px; pointer-events:none; z-index:50; max-width:180px; }
+.log-entry { background:rgba(15,31,20,.93); border:1px solid var(--border); border-radius:4px; padding:4px 10px; font-family:'Playfair Display',serif; font-size:.7rem; color:var(--gold2); letter-spacing:.04em; animation:log-in .3s ease,log-out .4s ease 2.6s forwards; }
+.log-entry.joker-log { border-color:rgba(155,89,182,.4); color:var(--joker2); }
+@keyframes log-in  { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+@keyframes log-out { from{opacity:1} to{opacity:0} }
+
+#bid-screen { display:none; position:fixed; inset:0; z-index:60; background:transparent; pointer-events:none; }
+#bid-screen.show { display:block; animation:fadein .25s; }
+@keyframes fadein { from{opacity:0} to{opacity:1} }
+.bid-panel { position:absolute; top:0; right:0; bottom:0; width:300px; background:linear-gradient(180deg,rgba(6,16,9,.98) 0%,rgba(4,11,6,1) 100%); border-left:1px solid var(--border); padding:20px 18px 24px; box-shadow:-8px 0 32px rgba(0,0,0,.8); display:flex; flex-direction:column; gap:12px; overflow-y:auto; pointer-events:all; }
+.bid-pname { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--gold2); }
+.bid-phint { font-size:.74rem; font-style:italic; color:rgba(242,234,216,.35); }
+.bid-hand  { display:flex; gap:4px; flex-wrap:wrap; }
+.bid-matches { font-size:.76rem; font-style:italic; color:rgba(232,204,120,.7); line-height:1.75; border-top:1px solid rgba(200,168,75,.1); padding-top:9px; }
+.bid-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.bid-lbl { font-family:'Playfair Display',serif; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); width:100%; }
+.bid-val { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:700; color:var(--gold3); min-width:50px; text-align:center; }
+.bid-step { width:30px; height:30px; border-radius:4px; border:1px solid var(--border); background:rgba(0,0,0,.3); color:var(--gold2); font-size:.95rem; cursor:pointer; transition:all .2s; }
+.bid-step:hover { background:rgba(200,168,75,.2); }
+.bid-current { font-size:.74rem; font-style:italic; color:rgba(242,234,216,.3); width:100%; }
+.bid-footer  { font-size:.7rem; color:rgba(242,234,216,.22); font-style:italic; text-align:center; border-top:1px solid rgba(200,168,75,.08); padding-top:8px; margin-top:auto; }
+
+#transfer-overlay { display:none; position:fixed; inset:0; z-index:75; background:rgba(0,0,0,.85); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+#transfer-overlay.show { display:flex; animation:fadein .3s; }
+.transfer-box { background:linear-gradient(160deg,#162a1e,#0e1c14); border:1px solid var(--border); border-radius:10px; padding:32px 38px; max-width:480px; width:90%; text-align:center; }
+.transfer-title { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; color:var(--gold2); margin-bottom:6px; }
+.transfer-sub   { font-size:.85rem; font-style:italic; color:rgba(242,234,216,.45); margin-bottom:20px; line-height:1.6; }
+.transfer-cards { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:20px; }
+.transfer-card-wrap { display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; }
+.transfer-card-wrap .card { transition:transform .2s,box-shadow .2s; }
+.transfer-card-wrap:hover .card { transform:translateY(-6px); box-shadow:0 8px 20px rgba(200,168,75,.3); }
+.transfer-card-wrap.chosen .card { outline:2px solid var(--gold2); box-shadow:0 0 14px rgba(232,204,120,.5); }
+.transfer-card-label { font-size:.65rem; font-family:'Playfair Display',serif; color:rgba(242,234,216,.4); }
+
+#joker-overlay { display:none; position:fixed; inset:0; z-index:70; background:rgba(0,0,0,.8); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
+#joker-overlay.show { display:flex; animation:fadein .3s; }
+.joker-box { background:linear-gradient(160deg,#1e0f2e,#12091e); border:1px solid rgba(155,89,182,.4); border-radius:10px; padding:30px 36px; max-width:460px; width:90%; }
+.joker-title { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:700; color:var(--joker2); margin-bottom:6px; }
+.joker-sub   { font-size:.82rem; font-style:italic; color:rgba(242,234,216,.4); margin-bottom:20px; }
+.joker-actions { display:flex; flex-direction:column; gap:8px; }
+.joker-action-btn { text-align:left; padding:10px 16px; border-radius:5px; border:1px solid rgba(155,89,182,.3); background:rgba(155,89,182,.08); color:var(--cream); font-family:'EB Garamond',serif; font-size:.88rem; cursor:pointer; transition:all .2s; line-height:1.5; }
+.joker-action-btn:hover { background:rgba(155,89,182,.2); border-color:rgba(155,89,182,.6); }
+.joker-action-btn b { color:var(--joker2); font-family:'Playfair Display',serif; font-size:.75rem; letter-spacing:.08em; }
+.joker-action-btn.disabled { opacity:.3; cursor:not-allowed; }
+
+#result-overlay { display:none; position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.82); backdrop-filter:blur(8px); align-items:center; justify-content:center; }
+#result-overlay.show { display:flex; animation:fadein .4s; }
+.result-box { background:linear-gradient(160deg,#162a1e,#0e1c14); border:1px solid rgba(200,168,75,.4); border-radius:10px; padding:36px 44px; max-width:500px; width:90%; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,.9); }
+.result-banner { font-family:'Playfair Display',serif; font-size:.9rem; color:var(--gold3); letter-spacing:.2em; text-transform:uppercase; margin-bottom:10px; }
+.result-title  { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; color:var(--gold2); margin-bottom:7px; }
+.result-body   { font-style:italic; color:rgba(242,234,216,.5); margin-bottom:18px; line-height:1.7; }
+.result-scores { display:flex; flex-direction:column; gap:6px; margin-bottom:20px; }
+.rs-row { display:flex; justify-content:space-between; align-items:center; padding:6px 12px; border-radius:4px; background:rgba(255,255,255,.04); border:1px solid var(--border); }
+.rs-name { font-family:'Playfair Display',serif; font-size:.8rem; color:var(--gold); letter-spacing:.08em; }
+.rs-pts  { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; }
+.rs-pts.pos { color:#6ae8a0; }
+.rs-pts.neg { color:var(--red2); }
+.rs-pts.neu { color:var(--cream); }
+
+#poker-overlay.show, #poker-result-overlay.show { display:flex !important; animation:fadein .4s; }
+.poker-card { background:white;color:#111;border-radius:4px;padding:2px 6px;font-weight:700;font-size:.9rem; }
+.poker-winner { border:1px solid var(--gold1);border-radius:8px;padding:4px 8px; }
+.poker-folded { opacity:.4; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Пирамида <span>1000</span> <span style="font-size:.55rem;color:rgba(200,168,75,.4);letter-spacing:.05em;font-style:italic">v0.5.7</span></div>
+  <div style="display:flex;gap:7px;align-items:center;">
+    <button class="btn sm" onclick="toggleRules()">Правила</button>
+    <button class="btn sm danger" id="btn-newgame" onclick="backToSetup()" style="display:none">Новая игра</button>
+  </div>
+</header>
+
+<div id="combo-log"></div>
+
+<!-- LOBBY -->
+<div id="lobby-screen">
+  <div class="lobby-title">Пирамида 1000<small>многопользовательская игра · v0.6.2</small></div>
+  <div class="lobby-box" id="lobby-create-box">
+    <div class="setup-label">Ваше имя</div>
+    <input class="setup-input" id="lobby-name" placeholder="Введите имя" value="Игрок">
+    <div class="setup-label">Число игроков</div>
+    <div class="count-selector">
+      <button class="count-btn active" id="lcnt3" onclick="setLobbyCount(3)">3</button>
+      <button class="count-btn" id="lcnt4" onclick="setLobbyCount(4)">4</button>
+    </div>
+    <button class="btn primary" onclick="createRoom()">Создать комнату</button>
+    <div class="lobby-or">— или —</div>
+    <div class="setup-label">Код комнаты</div>
+    <input class="setup-input" id="lobby-join-code" placeholder="Введите 4-значный код" maxlength="4" style="text-transform:uppercase;letter-spacing:.2em;font-size:1.1rem;">
+    <button class="btn" onclick="joinRoom()">Войти в комнату</button>
+  </div>
+  <div class="lobby-box" id="lobby-wait-box" style="display:none;">
+    <div class="room-code-display" id="lobby-code-big">----</div>
+    <div class="room-code-hint">Сообщите этот код другим игрокам</div>
+    <div id="lobby-players"></div>
+    <div class="lobby-status" id="lobby-status">Ожидаем игроков...</div>
+    <button class="btn primary" id="lobby-start-btn" onclick="lobbyStartGame()" style="display:none;">Начать игру</button>
+    <button class="btn danger sm" onclick="leaveLobby()">Покинуть комнату</button>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div class="setup-title">Пирамида 1000<small>карточная игра · 3–4 игрока · v0.6.2</small></div>
+  <div class="setup-box">
+    <div>
+      <div class="setup-label">Число игроков</div>
+      <div class="count-selector">
+        <button class="count-btn active" id="cnt3" onclick="setCount(3)">3</button>
+        <button class="count-btn"        id="cnt4" onclick="setCount(4)">4</button>
+      </div>
+    </div>
+    <div>
+      <div class="setup-label">Имена игроков</div>
+      <div id="players-grid" style="display:flex;flex-direction:column;gap:7px;margin-top:7px"></div>
+    </div>
+    <button class="btn primary" onclick="startGame()" style="align-self:center;margin-top:5px">Начать игру</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div id="scoreboard"></div>
+  <div id="progress-wrap"><div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div></div>
+  <div id="bank-display" style="text-align:center;color:var(--gold2);font-size:.85rem;padding:4px 0;min-height:20px"></div>
+  <div id="status-bar">—</div>
+  <div id="combo-display">&nbsp;</div>
+  <div id="table">
+    <div id="pyramid"></div>
+    <div id="bottom-zone"></div>
+  </div>
+  <div id="controls"></div>
+</div>
+
+<!-- BID PANEL -->
+<div id="bid-screen">
+  <div class="bid-panel">
+    <div>
+      <div class="bid-pname" id="bid-pname">—</div>
+      <div class="bid-phint">Оцените карты и расклад пирамиды</div>
+    </div>
+    <div class="bid-hand" id="bid-hand"></div>
+    <div class="bid-matches" id="bid-matches"></div>
+    <div class="bid-row">
+      <div class="bid-lbl">Ставка</div>
+      <button class="bid-step" onclick="adjustBid(-10)">−</button>
+      <div class="bid-val" id="bid-val">100</div>
+      <button class="bid-step" onclick="adjustBid(+10)">+</button>
+      <div class="bid-current" id="bid-current"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn primary" id="bid-btn" onclick="myRoomCode?doBidMultiplayer():doBid()">Ставка 100</button>
+      <button class="btn" onclick="myRoomCode?doPassMultiplayer():doPass()">Пас</button>
+    </div>
+    <div class="bid-footer" id="bid-footer"></div>
+  </div>
+</div>
+
+<!-- TRANSFER OVERLAY -->
+<div id="transfer-overlay">
+  <div class="transfer-box">
+    <div class="transfer-title" id="tr-title">Передача карт</div>
+    <div class="transfer-sub"   id="tr-sub"></div>
+    <div class="transfer-cards" id="tr-cards"></div>
+    <button class="btn primary" id="tr-btn" onclick="confirmTransfer()">Подтвердить</button>
+  </div>
+</div>
+
+<!-- JOKER ACTION OVERLAY -->
+<div id="joker-overlay">
+  <div class="joker-box">
+    <div class="joker-title">🃏 Действие джокером</div>
+    <div class="joker-sub" id="jov-sub">Выберите что сделать с джокером</div>
+    <div class="joker-actions" id="jov-actions"></div>
+  </div>
+</div>
+
+<!-- ROUND RESULT -->
+<!-- Покерный раунд -->
+<div id="poker-overlay" style="display:none;position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center">
+  <div style="background:var(--felt);border:1px solid var(--gold1);border-radius:16px;padding:32px;min-width:340px;max-width:480px;width:90%">
+    <div style="text-align:center;color:var(--gold2);font-family:var(--serif);font-size:1.1rem;letter-spacing:.1em;margin-bottom:8px">🂡 ПОКЕРНЫЙ РАУНД</div>
+    <div id="poker-pot" style="text-align:center;font-size:1.4rem;color:var(--gold1);font-weight:700;margin-bottom:16px"></div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:.75rem;color:rgba(242,234,216,.4);margin-bottom:6px">ОБЩИЙ СТОЛ</div>
+      <div id="poker-table-cards" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div id="poker-bets" style="margin-bottom:16px;font-size:.85rem"></div>
+    <div id="poker-actions" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+<!-- Результат покерного раунда -->
+<div id="poker-result-overlay" style="display:none;position:fixed;inset:0;z-index:96;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center">
+  <div style="background:var(--felt);border:1px solid var(--gold1);border-radius:16px;padding:32px;min-width:340px;max-width:480px;width:90%">
+    <div style="text-align:center;color:var(--gold2);font-family:var(--serif);font-size:1.1rem;letter-spacing:.1em;margin-bottom:8px">ВСКРЫТИЕ</div>
+    <div id="poker-pot-display" style="text-align:center;font-size:1.1rem;color:var(--gold1);margin-bottom:16px"></div>
+    <div id="poker-result-body"></div>
+  </div>
+</div>
+
+<div id="result-overlay">
+  <div class="result-box">
+    <div class="result-banner" id="rv-banner"></div>
+    <div class="result-title"  id="rv-title"></div>
+    <div class="result-body"   id="rv-body"></div>
+    <div class="result-scores" id="rv-scores"></div>
+    <button class="btn primary" id="rv-btn">Следующий раунд</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  КОНСТАНТЫ
+// ════════════════════════════════════════════
+const RANKS  = ['6','7','8','9','10','J','Q','K','A'];
+const SUITS  = ['♠','♥','♦','♣'];
+const RED_S  = new Set(['♥','♦']);
+const RANK_V = {'6':0,'7':1,'8':2,'9':3,'10':4,'J':5,'Q':6,'K':7,'A':8};
+
+const CSCORE = {
+  single:5, pair:10, set:30, four:90, fullhouse:70,
+  straight5:50, straight6:75, straight7:110, straight8:155, straight9:210,
+  flush5:60,    flush6:90,    flush7:130,    flush8:180,    flush9:245,
+  chaos:150
+};
+const CNAME = {
+  single:'Карта', pair:'Пара', set:'Сет', four:'Каре', fullhouse:'Фулхаус',
+  straight5:'Стрит 5', straight6:'Стрит 6', straight7:'Стрит 7', straight8:'Стрит 8', straight9:'Стрит 9',
+  flush5:'Флеш 5',     flush6:'Флеш 6',     flush7:'Флеш 7',    flush8:'Флеш 8',     flush9:'Флеш 9',
+  chaos:'Хаос'
+};
+
+const ROW_BONUS  = 20;
+const BANK_PCT   = 0.25; // 25% от каждой комбинации идёт в банк
+
+// Покерный раунд
+let roundBank      = 0;   // накопленный банк раунда
+let pokerPhase     = null; // null | 'betting' | 'showdown'
+let pokerPot       = 0;   // текущий банк покерного раунда (банк + ставки)
+let pokerBets      = [];  // ставки игроков [{pidx, bet, folded, allIn}]
+let pokerBetIdx    = 0;   // чья очередь ставить
+let pokerCallAmt   = 0;   // текущая максимальная ставка (для колла)
+let pokerTable     = [];  // открытые карты пирамиды (общий стол)
+let pokerBudgets   = [];  // бюджет каждого игрока для покерного раунда
+const WIN_SCORE  = 1000;
+const BARREL_THR = 880;
+const SKI_MAX    = 3;
+
+// ════════════════════════════════════════════
+//  СОСТОЯНИЕ
+// ════════════════════════════════════════════
+let pCount  = 3;
+let players = [];
+let pyramid = [];
+let hands   = [];   // локальные руки (могут содержать hidden для чужих)
+let rawHands = [];  // ИСХОДНЫЕ руки из Firebase — никогда не маскируются, только они пишутся обратно
+let kitty   = [];
+let topRank = null;
+let dealerIdx = 0;
+let bp = null;
+let myBidVal = 100;
+let gamePhase     = 'setup';
+let activePlayer  = -1;
+let lastKnownActivePlayer = -1; // отслеживает смену хода между тиками polling
+let roundWinner   = -1;
+let roundBid      = 0;
+let selectedCards = [];
+let transferState = null;
+let jokerActionState = null;
+let blockedCells = new Set();
+
+// ════════════════════════════════════════════
+//  SETUP
+// ════════════════════════════════════════════
+function setCount(n) {
+  pCount = n;
+  document.getElementById('cnt3').classList.toggle('active', n===3);
+  document.getElementById('cnt4').classList.toggle('active', n===4);
+  buildGrid();
+}
+function buildGrid() {
+  const g = document.getElementById('players-grid');
+  g.innerHTML = '';
+  for (let i=0; i<pCount; i++) {
+    const r = document.createElement('div');
+    r.className = 'player-row';
+    r.innerHTML = `<span class="player-num">${i+1}.</span>
+      <input class="setup-input" id="pn${i}" value="Игрок ${i+1}">`;
+    g.appendChild(r);
+  }
+}
+function backToSetup() {
+  if (gamePolling) { clearInterval(gamePolling); gamePolling = null; }
+  ['game-screen','bid-screen','transfer-overlay','joker-overlay','result-overlay'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.style.display=''; el.classList.remove('show','bid-open');
+  });
+  myRoomCode = null; myPlayerId = null; isHost = false;
+  myPlayerIndex = -1;
+  // Сбрасываем лобби в начальное состояние
+  document.getElementById('lobby-create-box').style.display = 'flex';
+  document.getElementById('lobby-wait-box').style.display   = 'none';
+  document.getElementById('lobby-join-code').value = '';
+  setLobbyStatus('');
+  showLobby();
+  document.getElementById('btn-newgame').style.display='none';
+}
+function startGame() {
+  players = [];
+  for (let i=0; i<pCount; i++) {
+    const name = document.getElementById('pn'+i).value.trim() || `Игрок ${i+1}`;
+    players.push({name, score:0, skis:0, barrel:false, barrelTry:0, bid:0, roundPts:0, jokers:[]});
+  }
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('game-screen').style.display='block';
+  document.getElementById('btn-newgame').style.display='inline-block';
+  dealerIdx = 0;
+  startRound();
+}
+
+// ════════════════════════════════════════════
+//  РАЗДАЧА
+// ════════════════════════════════════════════
+function makeDeck() {
+  const d=[];
+  for (const r of RANKS) for (const s of SUITS) d.push({rank:r,suit:s,isJoker:false});
+  return d;
+}
+function makeJoker() { return {rank:'🃏',suit:'',isJoker:true}; }
+// Нормализует Firebase-ответ в массив (Firebase может вернуть объект вместо массива)
+function toArr(x) { if (!x) return []; if (Array.isArray(x)) return x; return Object.values(x); }
+function shuffle(d) {
+  for (let i=d.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
+  return d;
+}
+
+function startRound() {
+  players.forEach(p=>{ p.bid=0; p.roundPts=0; p.jokers=[]; });
+  roundBank=0; pokerPhase=null; pokerPot=0; pokerBets=[]; pokerTable=[];
+  const deck = shuffle(makeDeck());
+  const jokerCountInPyramid = pCount===3 ? 2 : 1;
+  const closedCells = [];
+  for (let r=1; r<=5; r++)
+    for (let c=0; c<=r; c++) closedCells.push([r,c]);
+  shuffle(closedCells);
+  const jokerCells = new Set();
+  for (let i=0; i<jokerCountInPyramid; i++)
+    jokerCells.add(`${closedCells[i][0]},${closedCells[i][1]}`);
+
+  pyramid = [];
+  let idx = 0;
+  for (let r=0; r<7; r++) {
+    pyramid[r] = [];
+    for (let c=0; c<=r; c++) {
+      const open = (r===6 || r===0);
+      if (jokerCells.has(`${r},${c}`)) {
+        pyramid[r][c] = {rank:'🃏', suit:'', isJoker:true, open:false, removed:false, blocked:false, alwaysVisible:true};
+      } else {
+        pyramid[r][c] = {...deck[idx++], open, removed:false, blocked:false};
+      }
+    }
+  }
+  topRank = pyramid[0][0].rank;
+  hands = [];
+  for (let i=0; i<pCount; i++)
+    hands.push([{...deck[idx++]}, {...deck[idx++]}]);
+  kitty = [];
+  while (idx < deck.length) kitty.push({...deck[idx++]});
+
+  selectedCards  = [];
+  activePlayer   = -1;
+  roundWinner    = -1;
+  roundBid       = 0;
+  blockedCells   = new Set();
+  gamePhase      = 'bid';
+
+  renderPyramid();
+  renderHands(false);
+  renderControls();
+  renderScoreboard();
+  updateProgress();
+  setStatus(`Вершина: ${topRank} · Изучите расклад пирамиды`, 'info');
+  startBidding();
+}
+
+// ════════════════════════════════════════════
+//  ТОРГ
+// ════════════════════════════════════════════
+function startBidding() {
+  const order=[];
+  for (let i=1; i<=pCount; i++) order.push((dealerIdx+i)%pCount);
+  bp = {order, pos:0, currentBid:90, passer:new Set()};
+  nextBidTurn();
+}
+
+function nextBidTurn() {
+  while (bp.pos<bp.order.length && bp.passer.has(bp.order[bp.pos])) bp.pos++;
+  const active = bp.order.filter(i=>!bp.passer.has(i));
+  if (active.length<=1) { finishBidding(active.length===1?active[0]:bp.order[0]); return; }
+  if (bp.pos>=bp.order.length) {
+    bp.pos=0;
+    while (bp.pos<bp.order.length && bp.passer.has(bp.order[bp.pos])) bp.pos++;
+    if (bp.pos>=bp.order.length) { finishBidding(active[0]); return; }
+  }
+  const pidx = bp.order[bp.pos];
+  myBidVal   = bp.currentBid+10;
+  document.getElementById('bid-pname').textContent   = players[pidx].name;
+  document.getElementById('bid-current').textContent = bp.currentBid===90?'Ставок ещё нет':`Текущая ставка: ${bp.currentBid}`;
+  const handEl=document.getElementById('bid-hand');
+  handEl.innerHTML='';
+  for (const card of hands[pidx]) handEl.appendChild(makeCardSimple(card));
+  document.getElementById('bid-matches').innerHTML = bidHints(pidx);
+  document.getElementById('bid-val').textContent  = myBidVal;
+  document.getElementById('bid-btn').textContent  = `Ставка ${myBidVal}`;
+  const passNames=[...bp.passer].map(i=>players[i].name);
+  document.getElementById('bid-footer').textContent = passNames.length?'Пас: '+passNames.join(', '):'';
+  document.getElementById('bid-screen').classList.add('show');
+  document.getElementById('game-screen').classList.add('bid-open');
+}
+
+function adjustBid(d) {
+  myBidVal=Math.max(bp.currentBid+10,myBidVal+d);
+  document.getElementById('bid-val').textContent=myBidVal;
+  document.getElementById('bid-btn').textContent=`Ставка ${myBidVal}`;
+}
+function doBid()  { bp.currentBid=myBidVal; bp.pos++; nextBidTurn(); }
+function doPass() { bp.passer.add(bp.order[bp.pos]); bp.pos++; nextBidTurn(); }
+
+function finishBidding(winnerIdx) {
+  document.getElementById('bid-screen').classList.remove('show');
+  document.getElementById('game-screen').classList.remove('bid-open');
+  roundWinner = winnerIdx;
+  roundBid    = Math.max(bp.currentBid,100);
+  players[winnerIdx].bid = roundBid;
+  hands[winnerIdx].push(...kitty);
+  kitty=[];
+  if (pCount===3) {
+    startTransfer(winnerIdx);
+  } else {
+    for (let i=0; i<pCount; i++)
+      if (i!==winnerIdx) hands[i].push(makeJoker());
+    beginPlay(winnerIdx);
+  }
+}
+
+// ════════════════════════════════════════════
+//  ПЕРЕДАЧА КАРТ
+// ════════════════════════════════════════════
+function startTransfer(winnerIdx) {
+  const middleIdx = (winnerIdx+1)%pCount;
+  const lastIdx   = (winnerIdx+2)%pCount;
+  transferState   = {phase:'winner_give', winnerIdx, middleIdx, lastIdx, chosen:[]};
+  showTransferUI();
+}
+
+function showTransferUI() {
+  const ts = transferState;
+  const ov = document.getElementById('transfer-overlay');
+  const cardsEl = document.getElementById('tr-cards');
+  cardsEl.innerHTML='';
+  ts.chosen=[];
+
+  if (ts.phase==='winner_give') {
+    document.getElementById('tr-title').textContent = `${players[ts.winnerIdx].name} передаёт карты`;
+    document.getElementById('tr-sub').textContent   =
+      `Выберите 2 карты из руки для открытой передачи ${players[ts.middleIdx].name}`;
+    document.getElementById('tr-btn').textContent   = 'Передать 2 карты';
+    for (let i=0; i<hands[ts.winnerIdx].length; i++) {
+      const card=hands[ts.winnerIdx][i];
+      const wrap=document.createElement('div');
+      wrap.className='transfer-card-wrap';
+      wrap.dataset.idx=i;
+      wrap.appendChild(makeCardSimple(card));
+      const lbl=document.createElement('div');
+      lbl.className='transfer-card-label';
+      lbl.textContent=card.isJoker?'🃏 Джокер':`${card.rank}${card.suit||''}`;
+      wrap.appendChild(lbl);
+      wrap.addEventListener('click',()=>toggleTransferCard(wrap,i));
+      cardsEl.appendChild(wrap);
+    }
+  } else {
+    document.getElementById('tr-title').textContent = `${players[ts.middleIdx].name} передаёт карту`;
+    document.getElementById('tr-sub').textContent   =
+      `Выберите 1 карту для открытой передачи ${players[ts.lastIdx].name}`;
+    document.getElementById('tr-btn').textContent   = 'Передать карту';
+    for (let i=0; i<hands[ts.middleIdx].length; i++) {
+      const card=hands[ts.middleIdx][i];
+      const wrap=document.createElement('div');
+      wrap.className='transfer-card-wrap';
+      wrap.dataset.idx=i;
+      wrap.appendChild(makeCardSimple(card));
+      const lbl=document.createElement('div');
+      lbl.className='transfer-card-label';
+      lbl.textContent=card.isJoker?'🃏 Джокер':`${card.rank}${card.suit||''}`;
+      wrap.appendChild(lbl);
+      wrap.addEventListener('click',()=>toggleTransferCard(wrap,i));
+      cardsEl.appendChild(wrap);
+    }
+  }
+  ov.classList.add('show');
+}
+
+function toggleTransferCard(wrap,idx) {
+  const ts=transferState;
+  const maxChoose = ts.phase==='winner_give'?2:1;
+  const alreadyIdx = ts.chosen.indexOf(idx);
+  if (alreadyIdx>=0) {
+    ts.chosen.splice(alreadyIdx,1);
+    wrap.classList.remove('chosen');
+  } else if (ts.chosen.length<maxChoose) {
+    ts.chosen.push(idx);
+    wrap.classList.add('chosen');
+  }
+}
+
+async function confirmTransfer() {
+  const ts=transferState;
+  if (ts.phase==='winner_give') {
+    if (ts.chosen.length!==2) { setStatus('Выберите ровно 2 карты','warn'); return; }
+    const toGive = ts.chosen.sort((a,b)=>b-a).map(i=>{ const c=hands[ts.winnerIdx][i]; hands[ts.winnerIdx].splice(i,1); return c; });
+    hands[ts.middleIdx].push(...toGive);
+    if (myRoomCode) {
+      fbGet('rooms/' + myRoomCode + '/gameState').then(async snap => {
+        const gsReal = snap.val();
+        const realHands = gsReal.hands.map(h => [...h]);
+        realHands[ts.winnerIdx] = hands[ts.winnerIdx].map(c=>({...c}));
+        const transferred = toGive.map(c=>({...c}));
+        realHands[ts.middleIdx] = [...gsReal.hands[ts.middleIdx], ...transferred];
+        await fbUpdate('rooms/' + myRoomCode, {
+          'gameState/hands': realHands,
+          'gameState/transferPhase': 'middle_give',
+          'gameState/updatedAt': Date.now()
+        });
+        document.getElementById('transfer-overlay').classList.remove('show');
+        transferState = null;
+        setStatus(`Ожидаем передачи от ${players[ts.middleIdx]?.name}...`, 'info');
+      });
+    } else {
+      ts.phase='middle_give';
+      showTransferUI();
+    }
+  } else {
+    if (ts.chosen.length!==1) { setStatus('Выберите 1 карту','warn'); return; }
+    const idx=ts.chosen[0];
+    const card=hands[ts.middleIdx][idx];
+    hands[ts.middleIdx].splice(idx,1);
+    hands[ts.lastIdx].push(card);
+    document.getElementById('transfer-overlay').classList.remove('show');
+    transferState = null;
+
+    if (myRoomCode) {
+      const gsSnap = await fbGet('rooms/' + myRoomCode + '/gameState');
+      const gsReal = gsSnap.val();
+      // toArr нормализует объект {0:{...}} или массив — Firebase непоследователен
+      const realHands = toArr(gsReal.hands).map(h => toArr(h));
+      // middleIdx: берём его руку без переданной карты (уже обновлена в hands[ts.middleIdx])
+      realHands[ts.middleIdx] = hands[ts.middleIdx].map(c=>({...c}));
+      // lastIdx: карты из Firebase + переданная карта
+      realHands[ts.lastIdx] = [...toArr(gsReal.hands[ts.lastIdx]), {...card}];
+      for (let i=0; i<pCount; i++) {
+        if (i !== ts.winnerIdx) realHands[i] = [...realHands[i], makeJoker()];
+      }
+      await fbUpdate('rooms/' + myRoomCode, {
+        'gameState/hands': realHands,
+        'gameState/phase': 'play',
+        'gameState/activePlayer': ts.winnerIdx,
+        'gameState/transferPhase': null,
+        'gameState/updatedAt': Date.now()
+      });
+    } else {
+      for (let i=0; i<pCount; i++)
+        if (i!==ts.winnerIdx) hands[i].push(makeJoker());
+      beginPlay(ts.winnerIdx);
+    }
+  }
+}
+
+// ════════════════════════════════════════════
+//  НАЧАЛО ИГРЫ
+// ════════════════════════════════════════════
+function beginPlay(winnerIdx) {
+  gamePhase    = 'play';
+  activePlayer = winnerIdx;
+  renderPyramid();
+  renderHands(true);
+  renderControls();
+  renderScoreboard();
+  setStatus(`${players[winnerIdx].name} начинает · заявка ${roundBid} · вершина: ${topRank}`, 'info');
+}
+
+// ════════════════════════════════════════════
+//  ИГРОВАЯ ЛОГИКА
+// ════════════════════════════════════════════
+function getOpenCards() {
+  const res=[];
+  for (let r=0;r<7;r++)
+    for (let c=0;c<=r;c++) {
+      const card=pyramid[r][c];
+      if ((card.open||card.alwaysVisible) && !card.removed && !card.blocked) res.push({r,c,card});
+    }
+  return res;
+}
+
+function refreshOpen() {
+  for (let r=5;r>=0;r--)
+    for (let c=0;c<=r;c++) {
+      const card=pyramid[r][c];
+      if (card.removed||card.open) continue;
+      const bl=pyramid[r+1]?.[c], br=pyramid[r+1]?.[c+1];
+      if ((!bl||bl.removed)&&(!br||br.removed)) card.open=true;
+    }
+}
+
+function clearBlocksForTurn() {
+  blockedCells.forEach(key=>{
+    const [r,c]=key.split(',').map(Number);
+    if (pyramid[r]&&pyramid[r][c]) pyramid[r][c].blocked=false;
+  });
+  blockedCells.clear();
+}
+
+function detectCombo(cards) {
+  const nonJokers = cards.filter(c=>!c.isJoker);
+  const jokerCount= cards.filter(c=>c.isJoker).length;
+  const n = cards.length;
+  console.log('[combo] cards:', JSON.stringify(cards), 'nonJokers:', nonJokers.map(c=>c.rank+c.suit), 'jokers:', jokerCount);
+  if (jokerCount===2 && n===2) return 'chaos';
+  if (n===1) return nonJokers[0]?.isJoker ? null : 'single';
+  if (n===2) {
+    if (jokerCount===1) return 'pair';
+    if (nonJokers[0].rank===nonJokers[1].rank) return 'pair';
+    return null;
+  }
+  if (n===3) {
+    if (jokerCount>=1) {
+      if (jokerCount===1 && nonJokers[0].rank===nonJokers[1].rank) return 'set';
+      if (jokerCount===2) return 'set';
+    }
+    if (nonJokers.length===3 && nonJokers.every(c=>c.rank===nonJokers[0].rank)) return 'set';
+    return null;
+  }
+  if (n===4) {
+    if (jokerCount>=1) {
+      const ranks=nonJokers.map(c=>c.rank);
+      if (new Set(ranks).size<=1) return 'four';
+    }
+    if (nonJokers.length===4 && nonJokers.every(c=>c.rank===nonJokers[0].rank)) return 'four';
+    return null;
+  }
+  if (n>=5 && n<=9) {
+    const isFlush    = checkFlush(nonJokers, jokerCount, n);
+    const isStraight = checkStraight(nonJokers, jokerCount, n);
+    if (isStraight) return `straight${n}`;
+    if (isFlush)    return `flush${n}`;
+    if (n===5) {
+      const counts={};
+      nonJokers.forEach(c=>counts[c.rank]=(counts[c.rank]||0)+1);
+      const cv=Object.values(counts).sort((a,b)=>a-b);
+      if (jokerCount===0 && JSON.stringify(cv)==='[2,3]') return 'fullhouse';
+      if (jokerCount===1 && (JSON.stringify(cv)==='[2,2]'||JSON.stringify(cv)==='[1,3]')) return 'fullhouse';
+    }
+    return null;
+  }
+  return null;
+}
+
+function checkFlush(nonJokers, jokerCount, total) {
+  if (!nonJokers.length) return true;
+  const suit=nonJokers[0].suit;
+  const sameSuit=nonJokers.filter(c=>c.suit===suit).length;
+  return sameSuit+jokerCount>=total;
+}
+
+function checkStraight(nonJokers, jokerCount, total) {
+  if (!nonJokers.length) return true;
+  const vals=[...new Set(nonJokers.map(c=>RANK_V[c.rank]))].sort((a,b)=>a-b);
+  if (vals.length+jokerCount < total) return false;
+  const gaps = vals[vals.length-1] - vals[0] - (vals.length-1);
+  return vals.length+jokerCount>=total && gaps<=jokerCount && (vals[vals.length-1]-vals[0]+1)<=total;
+}
+
+function toggleCard(source, r, c, card) {
+  if (gamePhase!=='play'||activePlayer<0) return;
+  if (myRoomCode && activePlayer !== myPlayerIndex) return;
+  if (source==='hand'&&r!==activePlayer) return;
+  if (source==='pyramid'&&(!card.open&&!card.alwaysVisible)) return;
+  if (source==='pyramid'&&card.removed) return;
+  if (source==='pyramid'&&card.blocked) { setStatus('Эта карта заблокирована до следующего хода','warn'); return; }
+
+  if (source==='hand'&&card.isJoker) { openJokerMenu(card,source,r,c); return; }
+  if (source==='pyramid'&&card.isJoker) {
+    if (!card.open) { setStatus('Джокер перекрыт — сначала уберите карты над ним','warn'); return; }
+    takeJokerFromPyramid(r,c);
+    return;
+  }
+
+  const idx=selectedCards.findIndex(s=>s.source===source&&s.r===r&&s.c===c);
+  if (idx>=0) selectedCards.splice(idx,1);
+  else        selectedCards.push({source,r,c,card});
+
+  renderPyramid(); renderHands(true); updateComboDisplay();
+
+  if (myRoomCode) {
+    const combo = detectCombo(selectedCards.map(s=>s.card));
+    fbUpdate('rooms/' + myRoomCode, {
+      'gameState/selectedCards': selectedCards.map(s=>({source:s.source,r:s.r,c:s.c,rank:s.card?.rank,suit:s.card?.suit,isJoker:s.card?.isJoker||false})),
+      'gameState/activeCombo': combo ? {combo, pts:CSCORE[combo]} : null,
+      'gameState/updatedAt': Date.now()
+    }).catch(e=>console.error('toggleCard push error:',e));
+  }
+}
+
+function takeJokerFromPyramid(r,c) {
+  pyramid[r][c].removed=true;
+  hands[activePlayer].push(makeJoker());
+  syncRawHand(activePlayer);
+  refreshOpen();
+  addLog(`🃏 Джокер взят в руку`, true);
+  renderPyramid(); renderHands(true); renderScoreboard();
+  setStatus('Джокер взят в руку', 'info');
+  nextPlayer();
+}
+
+function openJokerMenu(card, source, r, c) {
+  jokerActionState = {card, source, r, c};
+  const actionsEl  = document.getElementById('jov-actions');
+  actionsEl.innerHTML='';
+  const jokerCount = hands[activePlayer].filter(c=>c.isJoker).length;
+  const canChaos = jokerCount>=2;
+  const actions = [
+    { key:'combo',   label:'<b>A · Комбинация</b>',       desc:'Использовать как любую карту в комбинации',      enabled:true },
+    { key:'chaos',   label:'<b>B · Хаос — 150 очков</b>', desc:'Разыграть два джокера (нужно 2 джокера)',          enabled:canChaos },
+    { key:'block',   label:'<b>C · Заблокировать карту</b>',desc:'Закрыть закрытую карту пирамиды на один круг',   enabled:true },
+    { key:'skiburn', label:'<b>D · Сжечь лыжу</b>',       desc:'Аннулировать одну лыжу',                          enabled:players[activePlayer].skis>0 },
+  ];
+  for (const act of actions) {
+    const btn=document.createElement('div');
+    btn.className='joker-action-btn'+(act.enabled?'':' disabled');
+    btn.innerHTML=`${act.label}<br><span style="font-size:.76rem;color:rgba(242,234,216,.45)">${act.desc}</span>`;
+    if (act.enabled) btn.addEventListener('click',()=>handleJokerAction(act.key));
+    actionsEl.appendChild(btn);
+  }
+  const cancel=document.createElement('div');
+  cancel.className='joker-action-btn';
+  cancel.innerHTML='<b style="color:rgba(242,234,216,.4)">Отмена</b>';
+  cancel.addEventListener('click',()=>{ document.getElementById('joker-overlay').classList.remove('show'); jokerActionState=null; });
+  actionsEl.appendChild(cancel);
+  document.getElementById('joker-overlay').classList.add('show');
+}
+
+function handleJokerAction(key) {
+  document.getElementById('joker-overlay').classList.remove('show');
+  const js=jokerActionState;
+  if (key==='combo') {
+    selectedCards.push({source:js.source, r:js.r, c:js.c, card:js.card});
+    renderPyramid(); renderHands(true); updateComboDisplay();
+    setStatus('Джокер добавлен к комбинации · выберите остальные карты', 'info');
+  } else if (key==='chaos') {
+    const ji1=hands[activePlayer].findIndex(c=>c.isJoker);
+    hands[activePlayer].splice(ji1,1);
+    const ji2=hands[activePlayer].findIndex(c=>c.isJoker);
+    hands[activePlayer].splice(ji2,1);
+    syncRawHand(activePlayer);
+    players[activePlayer].roundPts+=CSCORE.chaos;
+    addLog(`🃏 Хаос +${CSCORE.chaos}`, true);
+    renderHands(true); renderScoreboard();
+    setStatus(`Хаос! +${CSCORE.chaos} очков`, 'good');
+    nextPlayer();
+  } else if (key==='block') {
+    setStatus('Выберите карту в пирамиде для блокировки (клик)', 'warn');
+    gamePhase='joker_block'; renderPyramid();
+  } else if (key==='skiburn') {
+    players[activePlayer].skis=Math.max(0,players[activePlayer].skis-1);
+    removeJokerFromHand(activePlayer);
+    addLog(`🃏 Лыжа аннулирована`, true);
+    renderScoreboard(); renderHands(true);
+    setStatus('Джокер сожжён · лыжа аннулирована', 'good');
+    nextPlayer();
+  }
+  jokerActionState=null;
+}
+
+function removeJokerFromHand(pidx) {
+  const ji=hands[pidx].findIndex(c=>c.isJoker);
+  if (ji>=0) hands[pidx].splice(ji,1);
+  syncRawHand(pidx);
+}
+
+// Синхронизирует rawHands[pidx] с текущим локальным hands[pidx].
+// Вызывается после каждой локальной мутации руки активного игрока,
+// чтобы pushGameState() записал в Firebase актуальные (не маскированные) данные.
+function syncRawHand(pidx) {
+  if (rawHands && rawHands[pidx]) {
+    rawHands[pidx] = hands[pidx].map(c=>({...c}));
+  }
+}
+
+function pyramidClickInJokerMode(r,c,card) {
+  if (gamePhase==='joker_block') {
+    // Блокировать можно открытую карту (не убранную)
+    if (card.removed) { setStatus('Карта уже убрана','warn'); return; }
+    if (!card.open&&!card.alwaysVisible) { setStatus('Выберите открытую карту для блокировки','warn'); return; }
+    pyramid[r][c].blocked=true;
+    blockedCells.add(`${r},${c}`);
+    removeJokerFromHand(activePlayer);
+    gamePhase='play';
+    addLog(`🃏 Карта ${card.rank}${card.suit} заблокирована на один круг`, true);
+    renderPyramid(); renderHands(true);
+    setStatus(`Карта ${card.rank}${card.suit} заблокирована на один круг`, 'info');
+    if (myRoomCode) pushGameState();
+    nextPlayer();
+  }
+}
+
+function updateComboDisplay() {
+  const el=document.getElementById('combo-display');
+  if (!selectedCards.length) { el.innerHTML='&nbsp;'; return; }
+  const combo=detectCombo(selectedCards.map(s=>s.card));
+  if (combo) { el.textContent=`${CNAME[combo]} · ${CSCORE[combo]} очков`; el.style.color='var(--gold2)'; }
+  else       { el.textContent='Не является комбинацией'; el.style.color='rgba(232,160,106,.7)'; }
+}
+
+function commitCombo() {
+  if (gamePhase!=='play'||!selectedCards.length) return;
+  if (selectedCards.length===1) {
+    const sel=selectedCards[0];
+    if (sel.card.isJoker) { setStatus('Джокера одного недостаточно — добавьте карты или используйте меню джокера','warn'); return; }
+    if (sel.source==='pyramid'&&sel.r===0&&sel.c===0) { setStatus(`Вершину (${topRank}) нельзя снять — она перекрыта`,'warn'); return; }
+    if (sel.card.rank!==topRank) { setStatus(`Одиночно можно убрать только номинал вершины (${topRank})`,'warn'); return; }
+    doRemove('single'); return;
+  }
+  const combo=detectCombo(selectedCards.map(s=>s.card));
+  if (!combo) { setStatus('Выбранные карты не образуют комбинацию','warn'); return; }
+  doRemove(combo);
+}
+
+function doRemove(combo) {
+  const pts=CSCORE[combo];
+  const rows=new Set();
+  for (const sel of selectedCards) {
+    if (sel.source==='pyramid') {
+      pyramid[sel.r][sel.c].removed=true;
+      rows.add(sel.r);
+    } else {
+      // Ищем карту по значению (rank/suit/isJoker), а не по ссылке —
+      // чтобы работало и когда selectedCards заполняется через applyGameState (новые объекты)
+      const hi=hands[sel.r].findIndex(c=>
+        c.rank===sel.card.rank && c.suit===sel.card.suit && c.isJoker===sel.card.isJoker
+      );
+      if (hi>=0) { hands[sel.r].splice(hi,1); syncRawHand(sel.r); }
+    }
+  }
+  refreshOpen();
+  const bankShare = Math.floor(pts * BANK_PCT);
+  const playerShare = pts - bankShare;
+  roundBank += bankShare;
+  players[activePlayer].roundPts += playerShare;
+  let rowBonus=0;
+  for (const row of rows) {
+    if (pyramid[row].every(c=>c.removed)) {
+      const b=ROW_BONUS*(7-row);
+      rowBonus+=b;
+      addLog(`Ряд ${row+1} · +${b}`);
+    }
+  }
+  players[activePlayer].roundPts+=rowBonus;
+  addLog(`${CNAME[combo]} +${pts}${rowBonus?` · ряд +${rowBonus}`:''}`);
+  selectedCards=[];
+  renderPyramid(); renderHands(true); renderScoreboard(); updateProgress(); updateComboDisplay();
+  if (pyramid.every(row=>row.every(c=>c.removed))) { endRound(); return; }
+  setStatus(`+${pts} очков${rowBonus?' (+ ряд!)':''}`, 'good');
+  if (myRoomCode) pushGameState();
+}
+
+function passTurn() { nextPlayer(); }
+
+function nextPlayer() {
+  clearBlocksForTurn();
+  selectedCards=[];
+  updateComboDisplay();
+  let checked=0, next=(activePlayer+1)%pCount;
+  while (checked<pCount) {
+    if (hasMoves(next)) {
+      activePlayer=next;
+      gamePhase='play';
+      renderPyramid(); renderHands(true); renderControls(); renderScoreboard();
+      setStatus(`Ход: ${players[activePlayer].name} · вершина: ${topRank}`, 'info');
+      if (myRoomCode) pushGameState();
+      return;
+    }
+    next=(next+1)%pCount; checked++;
+  }
+  // Проверяем триггер покерного раунда:
+  // у каждого ровно 2 реальные карты (не джокеры) И нет ходов
+  const allHave2 = Array.from({length:pCount},(_,i)=>i)
+    .every(i => rawHands[i].filter(c=>!c.isJoker).length === 2);
+  if (allHave2) {
+    startPokerRound();
+    return;
+  }
+  endRound();
+}
+
+function hasMoves(pidx) {
+  const openP = getOpenCards();
+  const myH = (rawHands[pidx] || hands[pidx]) || [];
+  const openCards = openP.map(x => x.card);
+
+  // Джокер — всегда ход
+  if (myH.some(c => c.isJoker)) return true;
+
+  // Вершина: карта из руки бьёт вершину пирамиды
+  if (topRank && !pyramid[0][0].removed) {
+    if (myH.some(c => c.rank === topRank)) return true;
+    // Открытая карта пирамиды (не вершина) бьёт вершину
+    if (openP.some(x => !(x.r===0&&x.c===0) && x.card.rank === topRank)) return true;
+  }
+
+  // Пара/тройка по рангу — считаем только если минимум одна карта из открытой пирамиды
+  // Нельзя сыграть комбо только из карт руки без участия пирамиды
+  const byRank = {};
+  for (const c of openCards) { if(!byRank[c.rank]) byRank[c.rank]=[]; byRank[c.rank].push({c,src:'pyr'}); }
+  for (const c of myH)       { if(!byRank[c.rank]) byRank[c.rank]=[]; byRank[c.rank].push({c,src:'hand'}); }
+  for (const r in byRank) {
+    const group = byRank[r];
+    if (group.length >= 2 && group.some(x => x.src === 'pyr')) return true;
+  }
+
+  // Флеш/стрит — только если минимум одна карта из пирамиды участвует
+  if (openCards.length >= 1) {
+    const all = [...openCards, ...myH];
+    if (all.length >= 5) {
+      // Флеш: 5 карт одной масти, хотя бы 1 из пирамиды
+      const bySuit = {};
+      for (const c of all) { if(!bySuit[c.suit]) bySuit[c.suit]=[]; bySuit[c.suit].push(c); }
+      for (const s in bySuit) {
+        if (bySuit[s].length >= 5) {
+          const pyrCount = bySuit[s].filter(c => openCards.includes(c)).length;
+          if (pyrCount >= 1) return true;
+        }
+      }
+      // Стрит: 5 последовательных рангов, хотя бы 1 из пирамиды
+      const vals = [...new Set(all.map(c => RANK_V[c.rank]))].sort((a,b)=>a-b);
+      for (let i = 0; i <= vals.length-5; i++) {
+        if (vals[i+4] - vals[i] === 4) {
+          // Проверяем что хотя бы одна карта этих рангов — из пирамиды
+          const strRanks = new Set(vals.slice(i, i+5));
+          if (openCards.some(c => strRanks.has(RANK_V[c.rank]))) return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+
+// ════════════════════════════════════════════
+//  ПОКЕРНЫЙ РАУНД
+// ════════════════════════════════════════════
+
+// Ранги для покера (36-карточная колода)
+const POKER_RANKS = {'7':1,'8':2,'9':3,'10':4,'J':5,'Q':6,'K':7,'A':8};
+
+function startPokerRound() {
+  gamePhase = 'poker';
+  pokerPhase = 'betting';
+
+  // Сжигаем неиспользованных джокеров — добавляют 20 в банк
+  for (let i=0;i<pCount;i++) {
+    const ji = rawHands[i].findIndex(c=>c.isJoker);
+    if (ji>=0) {
+      rawHands[i].splice(ji,1);
+      hands[i] = hands[i].filter(c=>!c.isJoker);
+      roundBank += 20;
+      addLog(`🃏 Джокер игрока ${players[i].name} сгорел +20 в банк`);
+    }
+  }
+
+  // Общий стол — все открытые карты пирамиды
+  pokerTable = [];
+  for (const row of pyramid) {
+    for (const c of row) {
+      if (c.open && !c.removed) pokerTable.push({rank:c.rank, suit:c.suit});
+    }
+  }
+
+  pokerPot = roundBank;
+  pokerBudgets = players.map(p => p.roundPts);
+  pokerBets = Array.from({length:pCount}, (_,i) => ({
+    pidx: i,
+    bet: 0,
+    folded: pokerBudgets[i] === 0, // нет очков — сразу выбываем
+    allIn: false
+  }));
+  pokerCallAmt = 0;
+
+  // Первым ставит победитель торгов
+  pokerBetIdx = roundWinner;
+
+  addLog('🂡 Покерный раунд начался!');
+  renderPokerUI();
+
+  if (myRoomCode) pushGameState();
+}
+
+function pokerActivePlayers() {
+  return pokerBets.filter(b => !b.folded);
+}
+
+function pokerNextBettor() {
+  let next = (pokerBetIdx + 1) % pCount;
+  let checked = 0;
+  while (checked < pCount) {
+    if (!pokerBets[next].folded) return next;
+    next = (next + 1) % pCount;
+    checked++;
+  }
+  return -1;
+}
+
+function pokerAllCalled() {
+  const active = pokerActivePlayers();
+  if (active.length <= 1) return true;
+  return active.every(b => b.allIn || b.bet === pokerCallAmt);
+}
+
+function doPokerBet(action, amount) {
+  const b = pokerBets[pokerBetIdx];
+  const budget = pokerBudgets[pokerBetIdx];
+
+  if (action === 'fold') {
+    b.folded = true;
+    addLog(`${players[pokerBetIdx].name} пас`);
+  } else if (action === 'call') {
+    const callAmt = Math.min(pokerCallAmt - b.bet, budget - b.bet);
+    b.bet += callAmt;
+    pokerPot += callAmt;
+    if (b.bet >= budget) b.allIn = true;
+    addLog(`${players[pokerBetIdx].name} колл ${b.bet}`);
+  } else if (action === 'raise') {
+    const raise = Math.min(amount, budget);
+    const extra = raise - b.bet;
+    pokerPot += extra;
+    b.bet = raise;
+    pokerCallAmt = raise;
+    if (b.bet >= budget) b.allIn = true;
+    addLog(`${players[pokerBetIdx].name} рейз ${raise}`);
+  } else if (action === 'allin') {
+    const extra = budget - b.bet;
+    pokerPot += extra;
+    b.bet = budget;
+    b.allIn = true;
+    if (b.bet > pokerCallAmt) pokerCallAmt = b.bet;
+    addLog(`${players[pokerBetIdx].name} ва-банк ${b.bet}`);
+  }
+
+  const active = pokerActivePlayers();
+  if (active.length === 1) {
+    pokerShowdown();
+    return;
+  }
+  if (pokerAllCalled()) {
+    pokerShowdown();
+    return;
+  }
+
+  pokerBetIdx = pokerNextBettor();
+  renderPokerUI();
+  if (myRoomCode) pushGameState();
+}
+
+// Определение покерной комбинации из набора карт
+function bestPokerHand(cards) {
+  // Убираем джокеров (уже сгорели, но на всякий случай)
+  const cs = cards.filter(c=>!c.isJoker);
+  if (cs.length < 1) return {rank:0, name:'Нет карт'};
+
+  const vals = cs.map(c=>POKER_RANKS[c.rank]||0).sort((a,b)=>b-a);
+  const suits = cs.map(c=>c.suit);
+  const rankCount = {};
+  for (const v of vals) rankCount[v] = (rankCount[v]||0)+1;
+  const counts = Object.values(rankCount).sort((a,b)=>b-a);
+  const isFlush = suits.length>=5 && suits.every(s=>s===suits[0]);
+  const uniqueVals = [...new Set(vals)].sort((a,b)=>b-a);
+  let isStraight = false;
+  for (let i=0;i<=uniqueVals.length-5;i++) {
+    if (uniqueVals[i]-uniqueVals[i+4]===4) { isStraight=true; break; }
+  }
+
+  if (isFlush && isStraight) return {rank:8, name:'Стрит-флэш', high:vals[0]};
+  if (counts[0]===4) return {rank:7, name:'Каре', high:vals[0]};
+  if (counts[0]===3&&counts[1]===2) return {rank:6, name:'Фулл-хаус', high:vals[0]};
+  if (isFlush) return {rank:5, name:'Флэш', high:vals[0]};
+  if (isStraight) return {rank:4, name:'Стрит', high:vals[0]};
+  if (counts[0]===3) return {rank:3, name:'Сет', high:vals[0]};
+  if (counts[0]===2&&counts[1]===2) return {rank:2, name:'Две пары', high:vals[0]};
+  if (counts[0]===2) return {rank:1, name:'Пара', high:vals[0]};
+  return {rank:0, name:'Старшая карта', high:vals[0]};
+}
+
+function pokerShowdown() {
+  pokerPhase = 'showdown';
+  const active = pokerActivePlayers();
+
+  // Если остался один — он забирает банк
+  if (active.length === 1) {
+    const winner = active[0].pidx;
+    players[winner].roundPts += pokerPot;
+    addLog(`🏆 ${players[winner].name} забирает банк ${pokerPot} очков`);
+    renderPokerResult([{pidx:winner, hand:{rank:99,name:'Все спасовали'}, winner:true}]);
+    return;
+  }
+
+  // Определяем лучшую руку у каждого
+  const results = active.map(b => {
+    const myCards = rawHands[b.pidx].filter(c=>!c.isJoker);
+    const allCards = [...myCards, ...pokerTable];
+    const hand = bestPokerHand(allCards);
+    return {pidx:b.pidx, hand, cards:myCards};
+  });
+
+  results.sort((a,b) => b.hand.rank-a.hand.rank || b.hand.high-a.hand.high);
+  const winner = results[0];
+  winner.winner = true;
+
+  players[winner.pidx].roundPts += pokerPot;
+  addLog(`🏆 ${players[winner.pidx].name} выиграл банк ${pokerPot} — ${winner.hand.name}`);
+
+  renderPokerResult(results);
+  if (myRoomCode) pushGameState();
+}
+
+function renderPokerResult(results) {
+  const ov = document.getElementById('poker-overlay');
+  const body = document.getElementById('poker-result-body');
+  body.innerHTML = '';
+  for (const r of results) {
+    const row = document.createElement('div');
+    row.className = 'rs-row' + (r.winner?' poker-winner':'');
+    const cards = rawHands[r.pidx].filter(c=>!c.isJoker).map(c=>`${c.rank}${c.suit}`).join(' ');
+    row.innerHTML = `<span class="rs-name">${players[r.pidx].name}</span>
+      <div style="text-align:right">
+        <div class="rs-pts ${r.winner?'pos':''}">${r.winner?'🏆 ':''} ${r.hand.name}</div>
+        <div style="font-size:.7rem;color:rgba(242,234,216,.32)">${cards}</div>
+      </div>`;
+    body.appendChild(row);
+  }
+  document.getElementById('poker-pot-display').textContent = `Банк: ${pokerPot} очков`;
+  ov.classList.add('show');
+
+  setTimeout(() => {
+    ov.classList.remove('show');
+    endRound();
+  }, 4000);
+}
+
+function renderPokerUI() {
+  // Показываем общий стол
+  const tableEl = document.getElementById('poker-table-cards');
+  if (tableEl) {
+    tableEl.innerHTML = pokerTable.map(c=>`<span class="poker-card">${c.rank}${c.suit}</span>`).join('');
+  }
+  // Банк
+  const potEl = document.getElementById('poker-pot');
+  if (potEl) potEl.textContent = `Банк: ${pokerPot}`;
+
+  // Ставки игроков
+  const betsEl = document.getElementById('poker-bets');
+  if (betsEl) {
+    betsEl.innerHTML = pokerBets.map((b,i)=>
+      `<div class="${b.folded?'poker-folded':''}">${players[i].name}: ${b.folded?'пас':b.bet+' / '+pokerBudgets[i]}</div>`
+    ).join('');
+  }
+
+  // Кнопки действий — только если наш ход
+  const actEl = document.getElementById('poker-actions');
+  if (!actEl) return;
+  actEl.innerHTML = '';
+  const isMyPokerTurn = !myRoomCode || pokerBetIdx === myPlayerIndex;
+  if (gamePhase!=='poker'||pokerPhase!=='betting'||!isMyPokerTurn) return;
+
+  const b = pokerBets[pokerBetIdx];
+  const budget = pokerBudgets[pokerBetIdx];
+  const needCall = pokerCallAmt - b.bet;
+
+  const fold = document.createElement('button');
+  fold.className='btn'; fold.textContent='Пас';
+  fold.onclick=()=>doPokerBet('fold');
+  actEl.appendChild(fold);
+
+  if (needCall > 0 && needCall < budget) {
+    const call = document.createElement('button');
+    call.className='btn primary'; call.textContent=`Колл ${needCall}`;
+    call.onclick=()=>doPokerBet('call');
+    actEl.appendChild(call);
+  } else if (needCall === 0) {
+    const check = document.createElement('button');
+    check.className='btn primary'; check.textContent='Чек';
+    check.onclick=()=>doPokerBet('call');
+    actEl.appendChild(check);
+  }
+
+  // Рейз слайдер
+  const minRaise = Math.max(pokerCallAmt + 1, 1);
+  if (budget > minRaise) {
+    const raiseDiv = document.createElement('div');
+    raiseDiv.style.cssText='display:flex;gap:8px;align-items:center;margin-top:8px';
+    const slider = document.createElement('input');
+    slider.type='range'; slider.min=minRaise; slider.max=budget; slider.value=minRaise;
+    slider.style.flex='1';
+    const raiseVal = document.createElement('span');
+    raiseVal.textContent=minRaise;
+    slider.oninput=()=>raiseVal.textContent=slider.value;
+    const raiseBtn = document.createElement('button');
+    raiseBtn.className='btn'; raiseBtn.textContent='Рейз';
+    raiseBtn.onclick=()=>doPokerBet('raise',+slider.value);
+    raiseDiv.append(slider,raiseVal,raiseBtn);
+    actEl.appendChild(raiseDiv);
+  }
+
+  const allin = document.createElement('button');
+  allin.className='btn danger'; allin.textContent=`Ва-банк (${budget})`;
+  allin.onclick=()=>doPokerBet('allin');
+  actEl.appendChild(allin);
+}
+
+// ════════════════════════════════════════════
+//  КОНЕЦ РАУНДА
+// ════════════════════════════════════════════
+function endRound() {
+  gamePhase='end'; activePlayer=-1;
+  const results=[];
+
+  for (let i=0;i<pCount;i++) {
+    const p=players[i];
+    const earned=p.roundPts;
+    if (p.barrel) {
+      p.barrelTry++;
+      if (i===roundWinner&&earned>=p.bid) {
+        p.score=WIN_SCORE; p.barrel=false; p.barrelTry=0;
+        results.push({i,delta:'🏆',note:'Из бочки!'});
+      } else if (p.barrelTry>=3) {
+        p.score-=120; p.barrel=false; p.barrelTry=0;
+        results.push({i,delta:-120,note:'Вылет из бочки'});
+      } else {
+        results.push({i,delta:0,note:`Бочка (${p.barrelTry}/3)`});
+      }
+      continue;
+    }
+    let delta=(i===roundWinner)?(earned>=p.bid?p.bid:-p.bid):earned;
+    p.score+=delta;
+    if (p.score>=BARREL_THR&&p.score<WIN_SCORE&&!p.barrel) { p.barrel=true; p.barrelTry=0; }
+    if (i===roundWinner) {
+      if (delta<0) { p.skis++; if(p.skis>=SKI_MAX){p.score-=120;p.skis=0;} }
+      else p.skis=0;
+    }
+    results.push({i,delta,note:''});
+  }
+
+  const gw=players.findIndex(p=>p.score>=WIN_SCORE&&!p.barrel);
+
+  if (myRoomCode) {
+    const playersUpdate = players.map(p=>({
+      name:p.name, score:p.score, skis:p.skis, barrel:p.barrel,
+      barrelTry:p.barrelTry, bid:p.bid, roundPts:p.roundPts
+    }));
+    fbUpdate('rooms/' + myRoomCode, {
+      'gameState/phase':        'end',
+      'gameState/activePlayer': -1,
+      'gameState/players':      playersUpdate,
+      'gameState/roundResults': { results, gameWinner: gw },
+      'gameState/pyramid':      pyramid.map(row => row.map(c=>({...c, _k:1}))),
+      'gameState/selectedCards': [],
+      'gameState/updatedAt':    Date.now(),
+    'gameState/roundBank':     roundBank,
+    'gameState/pokerState':    gamePhase==='poker' ? {
+      phase: pokerPhase, pot: pokerPot, bets: pokerBets,
+      betIdx: pokerBetIdx, callAmt: pokerCallAmt,
+      table: pokerTable, budgets: pokerBudgets
+    } : null
+    }).catch(e=>console.error('endRound push error:', e));
+  }
+
+  showResult(results, gw);
+}
+
+// ════════════════════════════════════════════
+//  РЕЗУЛЬТАТ РАУНДА
+// ════════════════════════════════════════════
+function showResult(results, gw) {
+  document.getElementById('rv-banner').textContent = gw>=0 ? '✦ Победа в игре ✦' : 'Раунд завершён';
+  if (gw>=0) {
+    document.getElementById('rv-title').textContent = players[gw].name;
+    document.getElementById('rv-body').textContent  = `Набрал ${players[gw].score} — победа!`;
+  } else {
+    const wp=players[roundWinner];
+    const ok=wp.roundPts>=wp.bid;
+    document.getElementById('rv-title').textContent = ok?`${wp.name} выполнил заявку`:`${wp.name} не выполнил`;
+    document.getElementById('rv-body').textContent  = `Заявлено: ${roundBid} · Набрано: ${wp.roundPts}`;
+  }
+
+  const sc=document.getElementById('rv-scores');
+  sc.innerHTML='';
+  for (const res of results) {
+    const p=players[res.i], pts=res.delta;
+    const cls=pts==='🏆'?'pos':typeof pts==='number'&&pts>0?'pos':pts===0?'neu':'neg';
+    const row=document.createElement('div'); row.className='rs-row';
+    row.innerHTML=`<span class="rs-name">${p.name}</span>
+      <div style="text-align:right">
+        <div class="rs-pts ${cls}">${pts==='🏆'?'🏆 1000':(pts>=0?'+':'')}${pts}</div>
+        <div style="font-size:.7rem;color:rgba(242,234,216,.32)">${p.score} итого${res.note?' · '+res.note:''}</div>
+      </div>`;
+    sc.appendChild(row);
+  }
+
+  const btn=document.getElementById('rv-btn');
+  if (gw>=0) {
+    btn.textContent='Играть заново';
+    btn.disabled=false;
+    btn.onclick=()=>{ document.getElementById('result-overlay').classList.remove('show'); backToSetup(); };
+  } else if (myRoomCode) {
+    if (isHost) {
+      btn.textContent='Следующий раунд';
+      btn.disabled=false;
+      btn.onclick=nextRound;
+    } else {
+      btn.textContent='Ожидаем хоста...';
+      btn.disabled=true;
+      btn.onclick=null;
+    }
+  } else {
+    btn.textContent='Следующий раунд';
+    btn.disabled=false;
+    btn.onclick=nextRound;
+  }
+
+  document.getElementById('result-overlay').classList.add('show');
+}
+
+// ════════════════════════════════════════════
+//  СЛЕДУЮЩИЙ РАУНД
+// ════════════════════════════════════════════
+function nextRound() {
+  document.getElementById('result-overlay').classList.remove('show');
+  dealerIdx=(dealerIdx+1)%pCount;
+  if (myRoomCode) {
+    if (isHost) startRoundMultiplayer();
+  } else {
+    startRound();
+  }
+}
+
+// ════════════════════════════════════════════
+//  РЕНДЕР
+// ════════════════════════════════════════════
+function makeCardSimple(card) {
+  const div=document.createElement('div');
+  if (card.isJoker) {
+    div.className='card joker-card';
+    div.innerHTML=`<div class="card-inner">
+      <span class="rank-tl">🃏</span>
+      <span class="suit-c" style="font-size:1.8rem">🃏</span>
+      <span class="rank-br">🃏</span>
+    </div>`;
+  } else {
+    div.className=`card open ${RED_S.has(card.suit)?'red-card':'black-card'}`;
+    div.innerHTML=`<div class="card-inner">
+      <span class="rank-tl">${card.rank}${card.suit}</span>
+      <span class="suit-c">${card.suit}</span>
+      <span class="rank-br">${card.rank}${card.suit}</span>
+    </div>`;
+  }
+  return div;
+}
+
+function renderPyramid() {
+  const el=document.getElementById('pyramid');
+  el.innerHTML='';
+  for (let r=0;r<7;r++) {
+    const row=document.createElement('div');
+    row.className='pyr-row';
+    for (let c=0;c<=r;c++) row.appendChild(makePyrCard(pyramid[r][c],r,c));
+    el.appendChild(row);
+  }
+}
+
+function makePyrCard(card,r,c) {
+  const div=document.createElement('div');
+  div.className='card';
+  if (card.removed) { div.style.cssText='opacity:0;pointer-events:none;'; div.innerHTML='<div class="card-inner"></div>'; return div; }
+  if (card.blocked) { div.classList.add('blocked'); div.innerHTML='<div class="card-inner"></div>'; return div; }
+  if (card.isJoker && (card.alwaysVisible||card.open)) {
+    div.classList.add('joker-card');
+    if (selectedCards.some(s=>s.source==='pyramid'&&s.r===r&&s.c===c)) div.classList.add('selected');
+    div.innerHTML=`<div class="card-inner">
+      <span class="rank-tl">🃏</span>
+      <span class="suit-c" style="font-size:1.8rem">🃏</span>
+      <span class="rank-br">🃏</span>
+    </div>`;
+    if (gamePhase==='play'&&activePlayer>=0) div.addEventListener('click',()=>toggleCard('pyramid',r,c,card));
+    else if (gamePhase==='joker_block'||gamePhase==='joker_reveal') div.addEventListener('click',()=>pyramidClickInJokerMode(r,c,card));
+    return div;
+  }
+  if (card.revealedTemp) {
+    div.classList.add('open', RED_S.has(card.suit)?'red-card':'black-card');
+    div.style.outline='2px solid var(--joker2)';
+    div.innerHTML=`<div class="card-inner">
+      <span class="rank-tl">${card.rank}${card.suit}</span>
+      <span class="suit-c">${card.suit}</span>
+      <span class="rank-br">${card.rank}${card.suit}</span>
+    </div>`;
+    return div;
+  }
+  if (!card.open) {
+    div.classList.add('face-down');
+    div.innerHTML='<div class="card-inner"></div>';
+    if (gamePhase==='joker_reveal') div.addEventListener('click',()=>pyramidClickInJokerMode(r,c,card));
+    return div;
+  }
+  div.classList.add('open', RED_S.has(card.suit)?'red-card':'black-card');
+  if (selectedCards.some(s=>s.source==='pyramid'&&s.r===r&&s.c===c)) div.classList.add('selected');
+  div.innerHTML=`<div class="card-inner">
+    <span class="rank-tl">${card.rank}${card.suit}</span>
+    <span class="suit-c">${card.suit}</span>
+    <span class="rank-br">${card.rank}${card.suit}</span>
+  </div>`;
+  if (gamePhase==='play'&&activePlayer>=0) div.addEventListener('click',()=>toggleCard('pyramid',r,c,card));
+  else if (gamePhase==='joker_block') div.addEventListener('click',()=>pyramidClickInJokerMode(r,c,card));
+  return div;
+}
+
+function renderHands(showActive) {
+  if (myRoomCode) { renderHandsMultiplayer(); return; }
+  const bz=document.getElementById('bottom-zone');
+  bz.innerHTML='';
+  for (let i=0;i<pCount;i++) {
+    const wrap=document.createElement('div'); wrap.className='zone-wrap';
+    const lbl=document.createElement('div'); lbl.className='zone-label';
+    lbl.textContent=players[i].name+(i===activePlayer&&gamePhase==='play'?' ✦':'');
+    const hc=document.createElement('div'); hc.className='hand-cards';
+    const reveal=showActive&&(i===activePlayer||gamePhase==='end');
+    for (let j=0;j<hands[i].length;j++) hc.appendChild(makeHandCard(hands[i][j],i,j,reveal));
+    wrap.appendChild(lbl); wrap.appendChild(hc); bz.appendChild(wrap);
+  }
+}
+
+function makeHandCard(card,pidx,cidx,open) {
+  const div=document.createElement('div'); div.className='card';
+  if (!open||!card||card.hidden||card.rank==='?') { div.classList.add('face-down'); div.innerHTML='<div class="card-inner"></div>'; return div; }
+  if (card.isJoker) {
+    div.classList.add('joker-card');
+    if (selectedCards.some(s=>s.source==='hand'&&s.r===pidx&&s.c===cidx)) div.classList.add('selected');
+    div.innerHTML=`<div class="card-inner">
+      <span class="rank-tl">🃏</span>
+      <span class="suit-c" style="font-size:1.8rem">🃏</span>
+      <span class="rank-br">🃏</span>
+    </div>`;
+    // Клик разрешён если: это наша рука (pidx===myPlayerIndex в мультиплеере, или pidx===activePlayer в одиночной)
+  const canClick1 = gamePhase==='play' && (myRoomCode ? pidx===myPlayerIndex && activePlayer===myPlayerIndex : pidx===activePlayer);
+  if (canClick1) div.addEventListener('click',()=>toggleCard('hand',pidx,cidx,card));
+    return div;
+  }
+  div.classList.add('open', RED_S.has(card.suit)?'red-card':'black-card');
+  if (selectedCards.some(s=>s.source==='hand'&&s.r===pidx&&s.c===cidx)) div.classList.add('selected');
+  div.innerHTML=`<div class="card-inner">
+    <span class="rank-tl">${card.rank}${card.suit}</span>
+    <span class="suit-c">${card.suit}</span>
+    <span class="rank-br">${card.rank}${card.suit}</span>
+  </div>`;
+  const canClick2 = gamePhase==='play' && (myRoomCode ? pidx===myPlayerIndex && activePlayer===myPlayerIndex : pidx===activePlayer);
+  if (canClick2) div.addEventListener('click',()=>toggleCard('hand',pidx,cidx,card));
+  return div;
+}
+
+function renderControls() {
+  const el=document.getElementById('controls');
+  el.innerHTML='';
+  // В мультиплеере кнопки действий показываем только тому, чей сейчас ход
+  const isMyTurn = !myRoomCode || activePlayer === myPlayerIndex;
+  if (gamePhase==='play'&&activePlayer>=0&&isMyTurn) {
+    const b1=document.createElement('button'); b1.className='btn primary'; b1.textContent='Сыграть комбинацию'; b1.onclick=commitCombo;
+    const b2=document.createElement('button'); b2.className='btn'; b2.textContent='Пас →'; b2.onclick=passTurn;
+    const b3=document.createElement('button'); b3.className='btn danger'; b3.style.cssText='font-size:.65rem;padding:8px 14px;opacity:.6';
+    b3.textContent='Завершить раунд';
+    b3.onclick=()=>{ gamePhase='play'; endRound(); };
+    el.appendChild(b1); el.appendChild(b2); el.appendChild(b3);
+  }
+  if (gamePhase==='joker_block'&&isMyTurn) {
+    const bc=document.createElement('button'); bc.className='btn danger'; bc.textContent='Отмена';
+    bc.onclick=()=>{ gamePhase='play'; renderPyramid(); renderControls(); setStatus('',''); };
+    el.appendChild(bc);
+  }
+}
+
+function renderScoreboard() {
+  // Обновляем отображение банка
+  const bankEl = document.getElementById('bank-display');
+  if (bankEl) bankEl.textContent = roundBank > 0 ? `🏦 Банк: ${roundBank}` : '';
+
+  const sb=document.getElementById('scoreboard');
+  sb.innerHTML='';
+  for (let i=0;i<pCount;i++) {
+    const p=players[i];
+    const div=document.createElement('div');
+    div.className='player-score'+(i===activePlayer?' active-turn':'');
+    const badges=[];
+    if (p.skis>0)  badges.push(`<span class="badge badge-ski">⛷ ${p.skis}</span>`);
+    if (p.barrel)  badges.push(`<span class="badge badge-barrel">🛢 ${p.barrelTry}/3</span>`);
+    const jokerCount=(hands[i]||[]).filter(c=>c.isJoker).length;
+    if (jokerCount>0) badges.push(`<span class="badge badge-joker">🃏 ${jokerCount}</span>`);
+    div.innerHTML=`<div class="ps-name">${p.name}</div>
+      <div class="ps-score ${p.score<0?'neg':''}">${p.score}</div>
+      <div class="ps-sub">${p.bid?'Заявка: '+p.bid+(gamePhase==='play'?' · '+p.roundPts:''):''}</div>
+      <div class="ps-badges">${badges.join('')}</div>`;
+    sb.appendChild(div);
+  }
+}
+
+function updateProgress() {
+  const rem=pyramid.reduce((s,row)=>s+row.filter(c=>c.removed).length,0);
+  document.getElementById('progress-fill').style.width=(rem/28*100)+'%';
+}
+function setStatus(msg,cls) { const el=document.getElementById('status-bar'); el.textContent=msg; el.className=cls||''; }
+function addLog(msg,isJoker=false) {
+  const el=document.getElementById('combo-log');
+  const e=document.createElement('div');
+  e.className='log-entry'+(isJoker?' joker-log':''); e.textContent=msg; el.appendChild(e);
+  setTimeout(()=>e.remove(),3000);
+}
+
+function bidHints(pidx) {
+  const openP=getOpenCards(), myHand=hands[pidx], hints=[];
+  const byRank={};
+  for (const {card} of openP) { if(!byRank[card.rank]) byRank[card.rank]=0; byRank[card.rank]++; }
+  for (const hc of myHand) {
+    if (hc.isJoker) { hints.push('🃏 Джокер — усилит любую комбинацию'); continue; }
+    const n=byRank[hc.rank]||0;
+    if (n===1) hints.push(`${hc.rank}${hc.suit} · пара с пирамидой (+10)`);
+    if (n>=2)  hints.push(`${hc.rank}${hc.suit} · сет с пирамидой (+30)`);
+  }
+  if (topRank) {
+    const has=myHand.some(c=>!c.isJoker&&c.rank===topRank)||openP.some(x=>!(x.r===0&&x.c===0)&&x.card.rank===topRank);
+    if (has) hints.push(`Вершина ${topRank} · одиночный ход (+5)`);
+  }
+  const bySuit={};
+  const all=[...myHand.filter(c=>!c.isJoker),...openP.map(x=>x.card).filter(c=>!c.isJoker)];
+  for (const c of all) { if(!bySuit[c.suit]) bySuit[c.suit]=0; bySuit[c.suit]++; }
+  for (const [s,n] of Object.entries(bySuit)) if (n>=4) hints.push(`${n} карт ${s} · флеш-потенциал`);
+  return hints.length ? hints.map(h=>`· ${h}`).join('<br>') : '<span style="color:rgba(242,234,216,.25)">Явных совпадений не видно</span>';
+}
+
+// ════════════════════════════════════════════
+//  ПРАВИЛА
+// ════════════════════════════════════════════
+let rulesOpen=false;
+function toggleRules() {
+  if (rulesOpen) { document.getElementById('rules-modal')?.remove(); rulesOpen=false; return; }
+  rulesOpen=true;
+  const m=document.createElement('div'); m.id='rules-modal';
+  m.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+  m.innerHTML=`<div style="background:linear-gradient(160deg,#162a1e,#0e1c14);border:1px solid rgba(200,168,75,.4);border-radius:10px;padding:28px 36px;max-width:580px;width:92%;max-height:86vh;overflow-y:auto;">
+    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold2);margin-bottom:14px">Правила · Пирамида 1000</div>
+    <div style="font-size:.85rem;line-height:1.9;color:rgba(242,234,216,.72)">
+      <b style="color:var(--gold)">Колода:</b> 36 карт (6–A, 4 масти) + 4 джокера = 40 карт.<br><br>
+      <b style="color:var(--gold)">Раздача на 3:</b> 28 в пирамиду (2 джокера внутри, всегда видны), по 2 на руки, прикуп 2.<br>
+      <b style="color:var(--gold)">Раздача на 4:</b> 28 в пирамиду (1 джокер внутри), по 2 на руки, прикупа нет.<br><br>
+      <b style="color:var(--gold)">Торг:</b> мин. 100, шаг 10. Победитель берёт прикуп.<br><br>
+      <b style="color:var(--gold)">Передача карт (только на 3):</b> победитель отдаёт 2 карты открыто игроку справа; тот отдаёт 1 карту следующему. Соперники получают по джокеру.<br>
+      <b style="color:var(--gold)">На 4:</b> победитель берёт прикуп, соперники получают по джокеру.<br><br>
+      <b style="color:var(--gold)">Ход:</b> выбирай карты из открытой пирамиды и/или руки → комбинация → «Сыграть».<br><br>
+      <b style="color:var(--gold)">Вершина:</b> задаёт номинал для одиночных ходов (+5).<br><br>
+      <b style="color:var(--gold)">Комбинации:</b><br>
+      Пара — 10 · Сет — 30 · Фулхаус — 70 · Каре — 90<br>
+      Стрит: 5=50 · 6=75 · 7=110 · 8=155 · 9=210<br>
+      Флеш:  5=60 · 6=90 · 7=130 · 8=180 · 9=245<br><br>
+      <b style="color:var(--joker2)">Джокер — действия:</b><br>
+      A · Комбинация · B · Хаос (150 очков) · C · Блок · D · Вскрыть · E · Сжечь лыжу<br><br>
+      <b style="color:var(--gold)">Бонус за ряд:</b> 20 × (7 − индекс ряда).<br>
+      <b style="color:var(--gold)">⛷ Лыжи:</b> 3 подряд невыполненные → −120.<br>
+      <b style="color:var(--gold)">🛢 Бочка:</b> 880–999 → 3 попытки выйти на 1000. Иначе −120.
+    </div>
+    <button class="btn sm" style="margin-top:14px" onclick="toggleRules()">Закрыть</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+buildGrid();
+
+// ════════════════════════════════════════════
+//  FIREBASE CONFIG
+// ════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCntVEdmVqidSW-M2RJNmTA4ID730S2fx8",
+  authDomain: "piramida1000.firebaseapp.com",
+  databaseURL: "https://piramida1000-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "piramida1000",
+  storageBucket: "piramida1000.firebasestorage.app",
+  messagingSenderId: "581886882970",
+  appId: "1:581886882970:web:9d8c1a9283ac6b8ca45b23"
+};
+
+let db = null;
+let myPlayerIndex = -1;
+let gamePolling = null;
+let gameState_round = 0;
+let myPlayerId = null;
+let myRoomCode = null;
+let lobbyCount = 3;
+let isHost = false;
+
+const FB_URL = firebaseConfig.databaseURL;
+const FB_KEY = firebaseConfig.apiKey;
+const pollListeners = {};
+
+function fbPath(path) { return `${FB_URL}/${path}.json?auth=${FB_KEY}`; }
+
+async function fbGet(path) {
+  const r = await fetch(fbPath(path));
+  const data = await r.json();
+  return { val: ()=>data, exists: ()=>data!==null&&data!==undefined };
+}
+async function fbSet(path, val) {
+  const r = await fetch(fbPath(path), {method:'PUT', body:JSON.stringify(val), headers:{'Content-Type':'application/json'}});
+  if (!r.ok) throw new Error('fbSet failed: ' + r.status);
+}
+async function fbUpdate(path, val) {
+  const r = await fetch(fbPath(path), {method:'PATCH', body:JSON.stringify(val), headers:{'Content-Type':'application/json'}});
+  if (!r.ok) throw new Error('fbUpdate failed: ' + r.status);
+}
+async function fbRemove(path) { await fetch(fbPath(path), {method:'DELETE'}); }
+
+function fbOnValue(path, callback) {
+  fbGet(path).then(callback).catch(console.error);
+  if (pollListeners[path]) clearInterval(pollListeners[path]);
+  pollListeners[path] = setInterval(() => {
+    fbGet(path).then(callback).catch(console.error);
+  }, 2000);
+}
+function fbOffValue(path) {
+  if (pollListeners[path]) { clearInterval(pollListeners[path]); delete pollListeners[path]; }
+}
+
+function initFirebase() { db = true; console.log('Firebase REST API ready'); }
+
+// ════════════════════════════════════════════
+//  LOBBY
+// ════════════════════════════════════════════
+function showLobby() {
+  document.getElementById('lobby-screen').style.display = 'flex';
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display  = 'none';
+  document.getElementById('btn-newgame').style.display  = 'none';
+  initFirebase();
+}
+
+function setLobbyCount(n) {
+  lobbyCount = n;
+  document.getElementById('lcnt3').classList.toggle('active', n===3);
+  document.getElementById('lcnt4').classList.toggle('active', n===4);
+}
+function setLobbyStatus(msg, cls='') {
+  const el = document.getElementById('lobby-status');
+  if (el) { el.textContent = msg; el.className = 'lobby-status ' + cls; }
+}
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:4}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+async function createRoom() {
+  if (!db) { alert('Firebase не подключён.'); return; }
+  setLobbyStatus('Создаём комнату...');
+  const name = document.getElementById('lobby-name').value.trim() || 'Игрок';
+  myPlayerId = 'p_' + Date.now();
+  isHost = true;
+  try {
+    let code = generateCode();
+    for (let i=0; i<10; i++) {
+      const snap = await fbGet('rooms/' + code);
+      if (!snap.exists()) break;
+      code = generateCode();
+    }
+    myRoomCode = code;
+    await fbSet('rooms/' + code, { code, host: myPlayerId, playerCount: lobbyCount, status: 'waiting', createdAt: Date.now() });
+    await fbSet('rooms/' + code + '/players/' + myPlayerId, { name, id: myPlayerId, isHost: true, joinedAt: Date.now() });
+    showWaitRoom(code);
+    listenRoom(code);
+  } catch(e) {
+    console.error('createRoom error:', e);
+    setLobbyStatus('Ошибка: ' + e.message, 'warn');
+  }
+}
+
+async function joinRoom() {
+  if (!db) { alert('Firebase не подключён.'); return; }
+  const code = document.getElementById('lobby-join-code').value.trim().toUpperCase();
+  if (code.length !== 4) { setLobbyStatus('Введите 4-значный код', 'warn'); return; }
+  const snap = await fbGet('rooms/' + code);
+  if (!snap.exists()) { setLobbyStatus('Комната не найдена', 'warn'); return; }
+  const room = snap.val();
+
+  const playersSnap = await fbGet('rooms/' + code + '/players');
+  const playersObj = playersSnap.exists() ? playersSnap.val() : {};
+  const playersList = Object.values(playersObj).sort((a,b)=>a.joinedAt-b.joinedAt);
+
+  // Повторный вход: ищем игрока по имени если игра уже идёт
+  const name = document.getElementById('lobby-name').value.trim() || 'Игрок';
+  if (room.status === 'playing') {
+    const existing = playersList.find(p => p.name === name);
+    if (existing) {
+      // Игрок найден — восстанавливаем сессию
+      myPlayerId  = existing.id;
+      myRoomCode  = code;
+      isHost      = existing.isHost || false;
+      setLobbyStatus('Восстанавливаем сессию...', 'info');
+      startMultiplayerGame(room, playersList);
+      return;
+    } else {
+      setLobbyStatus('Игра уже началась — введите то же имя что использовали', 'warn');
+      return;
+    }
+  }
+
+  const currentPlayers = playersList.length;
+  if (currentPlayers >= room.playerCount) { setLobbyStatus('Комната заполнена', 'warn'); return; }
+  myPlayerId = 'p_' + Date.now();
+  myRoomCode = code;
+  isHost = false;
+  await fbSet('rooms/' + code + '/players/' + myPlayerId, { name, id: myPlayerId, isHost: false, joinedAt: Date.now() });
+  showWaitRoom(code);
+  listenRoom(code);
+}
+
+function showWaitRoom(code) {
+  document.getElementById('lobby-create-box').style.display = 'none';
+  document.getElementById('lobby-wait-box').style.display   = 'flex';
+  document.getElementById('lobby-code-big').textContent = code;
+}
+
+function listenRoom(code) {
+  fbOnValue('rooms/' + code, snap => {
+    // Не выбрасываем в лобби если snap пустой — Firebase иногда возвращает пустой
+    // ответ при нестабильном соединении. Просто пропускаем этот тик.
+    if (!snap.exists()) {
+      if (document.getElementById('game-screen').style.display === 'block') return;
+      leaveLobby(); return;
+    }
+    const room = snap.val();
+    const players = room.players ? Object.values(room.players).sort((a,b)=>a.joinedAt-b.joinedAt) : [];
+    const el = document.getElementById('lobby-players');
+    el.innerHTML = '';
+    const needed = room.playerCount;
+    for (let i=0; i<needed; i++) {
+      const p = players[i];
+      const row = document.createElement('div'); row.className = 'lobby-player-row';
+      if (p) {
+        row.innerHTML = `<div class="lobby-player-dot"></div>
+          <div class="lobby-player-name">${p.name}${p.id===myPlayerId?' (вы)':''}</div>
+          ${p.isHost ? '<div class="lobby-player-host">хост</div>' : ''}`;
+      } else {
+        row.innerHTML = `<div class="lobby-player-dot empty"></div>
+          <div class="lobby-player-name empty">Ожидаем игрока...</div>`;
+      }
+      el.appendChild(row);
+    }
+    const joined = players.length;
+    if (joined < needed) {
+      setLobbyStatus(`Вошли ${joined} из ${needed} игроков`);
+      document.getElementById('lobby-start-btn').style.display = 'none';
+    } else {
+      setLobbyStatus('Все игроки в сборе! Можно начинать.', 'good');
+      if (isHost) document.getElementById('lobby-start-btn').style.display = 'block';
+    }
+    if (room.status === 'playing') startMultiplayerGame(room, players);
+  });
+}
+
+async function lobbyStartGame() {
+  if (!isHost) return;
+  const snap = await fbGet('rooms/' + myRoomCode + '/players');
+  if (!snap.exists()) return;
+  const fbPlayers = Object.values(snap.val()).sort((a,b)=>a.joinedAt-b.joinedAt);
+  const room = (await fbGet('rooms/' + myRoomCode)).val();
+  if (fbPlayers.length < room.playerCount) { setLobbyStatus('Не все игроки вошли', 'warn'); return; }
+  await fbUpdate('rooms/' + myRoomCode, { status: 'playing', startedAt: Date.now() });
+  startMultiplayerGame(room, fbPlayers);
+}
+
+function startMultiplayerGame(room, fbPlayers) {
+  fbOffValue('rooms/' + myRoomCode);
+  pCount = room.playerCount;
+  document.getElementById('lobby-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display  = 'block';
+  document.getElementById('btn-newgame').style.display  = 'inline-block';
+  players = fbPlayers.map(p => ({
+    name: p.name, score:0, skis:0, barrel:false, barrelTry:0, bid:0, roundPts:0, jokers:[]
+  }));
+  dealerIdx = 0;
+
+  // ── ПАТЧ 1: myPlayerIndex устанавливается ДО listenGameState() ──
+  // Это предотвращает race condition когда первый тик polling'а
+  // приходит до того как мы знаем кто мы, и маскирует наши карты
+  myPlayerIndex = fbPlayers.findIndex(p => p.id === myPlayerId);
+  console.log('Мой индекс:', myPlayerIndex, 'из', pCount, 'id:', myPlayerId);
+
+  if (isHost) {
+    startRoundMultiplayer();
+  } else {
+    setStatus('Ожидаем раздачи...', 'info');
+  }
+  // listenGameState вызывается ПОСЛЕ установки myPlayerIndex — всегда
+  listenGameState();
+}
+
+// ════════════════════════════════════════════
+//  МУЛЬТИПЛЕЕР: РАЗДАЧА (хост)
+// ════════════════════════════════════════════
+async function startRoundMultiplayer() {
+  players.forEach(p=>{ p.bid=0; p.roundPts=0; p.jokers=[]; });
+  roundBank=0; pokerPhase=null; pokerPot=0; pokerBets=[]; pokerTable=[];
+
+  const deck = shuffle(makeDeck());
+  const jokerCountInPyramid = pCount===3 ? 2 : 1;
+  const closedCells = [];
+  for (let r=1; r<=5; r++)
+    for (let c=0; c<=r; c++) closedCells.push([r,c]);
+  shuffle(closedCells);
+  const jokerCells = new Set();
+  for (let i=0; i<jokerCountInPyramid; i++)
+    jokerCells.add(`${closedCells[i][0]},${closedCells[i][1]}`);
+
+  const pyrData = [];
+  let idx = 0;
+  for (let r=0; r<7; r++) {
+    pyrData[r] = [];
+    for (let c=0; c<=r; c++) {
+      const open = (r===6 || r===0);
+      if (jokerCells.has(`${r},${c}`)) {
+        pyrData[r][c] = {rank:'🃏', suit:'', isJoker:true, open:false, removed:false, blocked:false, alwaysVisible:true};
+      } else {
+        pyrData[r][c] = {...deck[idx++], open, removed:false, blocked:false};
+      }
+    }
+  }
+
+  const handsData = [];
+  for (let i=0; i<pCount; i++)
+    handsData.push([{...deck[idx++]}, {...deck[idx++]}]);
+
+  const kittyData = [];
+  while (idx < deck.length) kittyData.push({...deck[idx++]});
+
+  const topRankData = pyrData[0][0].rank;
+
+  const gameState = {
+    phase: 'bid',
+    round: gameState_round + 1,
+    dealerIdx,
+    activePlayer: -1,
+    roundWinner: -1,
+    roundBid: 0,
+    topRank: topRankData,
+    pyramid: pyrData,
+    kitty: kittyData,
+    hands: handsData,
+    players: players.map(p=>({name:p.name,score:p.score,skis:p.skis,barrel:p.barrel,barrelTry:p.barrelTry,bid:0,roundPts:0})),
+    bidState: {
+      order: Array.from({length:pCount},(_,i)=>(dealerIdx+1+i)%pCount),
+      pos: 0,
+      currentBid: 90,
+      passers: []
+    },
+    selectedCards: [],
+    activeCombo: null,
+    roundResults: null,
+    updatedAt: Date.now()
+  };
+  gameState_round++;
+
+  try {
+    await fbSet('rooms/' + myRoomCode + '/gameState', gameState);
+    console.log('Раздача записана в Firebase');
+    applyGameState(gameState);
+  } catch(e) {
+    console.error('Ошибка записи раздачи:', e);
+    setStatus('Ошибка синхронизации: ' + e.message, 'warn');
+  }
+}
+
+// ════════════════════════════════════════════
+//  МУЛЬТИПЛЕЕР: POLLING
+// ════════════════════════════════════════════
+function listenGameState() {
+  if (gamePolling) clearInterval(gamePolling);
+  async function fetchAndApply() {
+    try {
+      const snap = await fbGet('rooms/' + myRoomCode + '/gameState');
+      if (snap.exists() && snap.val()) applyGameState(snap.val());
+      else if (!isHost) setStatus('Ожидаем раздачи от хоста...', 'info');
+    } catch(e) { console.error('polling error:', e); }
+  }
+  fetchAndApply();
+  gamePolling = setInterval(fetchAndApply, 2000);
+}
+
+// ════════════════════════════════════════════
+//  ПРИМЕНЯЕМ СОСТОЯНИЕ (ИСПРАВЛЕНО — 3 патча)
+// ════════════════════════════════════════════
+function applyGameState(gs) {
+  if (!gs) return;
+
+  // Новый раунд начался (хост нажал "Следующий раунд") — закрываем оверлей результатов
+  if (gs.phase === 'bid' || gs.phase === 'play' || gs.phase === 'transfer') {
+    document.getElementById('result-overlay').classList.remove('show');
+  }
+
+  // Фаза 'end' обрабатывается сразу — показываем результат даже если пирамида null
+  if (gs.phase === 'end' && gs.roundResults) {
+    gamePhase = 'end'; activePlayer = -1;
+    if (gs.players) gs.players.forEach((gp,i) => {
+      if (players[i]) { players[i].score=gp.score; players[i].skis=gp.skis; players[i].barrel=gp.barrel; players[i].barrelTry=gp.barrelTry; }
+    });
+    const ov = document.getElementById('result-overlay');
+    if (!ov.classList.contains('show')) showResult(gs.roundResults.results, gs.roundResults.gameWinner);
+    renderScoreboard();
+    return;
+  }
+
+  // Firebase может вернуть объект вместо массива, или null-строки — нормализуем (toArr глобальная)
+  const pyrRaw = toArr(gs.pyramid);
+  if (!pyrRaw || pyrRaw.length === 0) { setStatus('Ожидаем раздачи...', 'info'); return; }
+  // Проверяем что строки пирамиды не null (Firebase удаляет полностью убранные строки)
+  if (pyrRaw.some(row => !row)) { setStatus('Ожидаем раздачи...', 'info'); return; }
+
+  const handsRaw = toArr(gs.hands);
+  if (!handsRaw || handsRaw.length === 0) { setStatus('Ожидаем раздачи...', 'info'); return; }
+  // Нормализуем каждую руку — Firebase может вернуть объект вместо массива
+  const handsNorm = handsRaw.map(h => toArr(h) || []);
+
+  // ── ПАТЧ 2: ранний return убран ──
+  // Старый код делал ранний return когда gs.phase==='play' && activePlayer===myPlayerIndex.
+  // Это вызывало застревание маскированных карт: если первый тик пришёл с myPlayerIndex===-1,
+  // карты маскировались, а потом ранний return не давал их перерисовать.
+
+  const prevPhase = gamePhase;
+  gamePhase    = gs.phase || 'bid';
+  activePlayer = gs.activePlayer !== undefined ? gs.activePlayer : -1;
+  roundWinner  = gs.roundWinner  !== undefined ? gs.roundWinner  : -1;
+  roundBid     = gs.roundBid || 0;
+  topRank      = gs.topRank || null;
+  dealerIdx    = gs.dealerIdx || 0;
+  blockedCells = new Set();
+  // Новый раунд — сбрасываем selectedCards
+  if (gamePhase === 'bid' && prevPhase === 'end') selectedCards = [];
+
+  pyramid = pyrRaw.map(row => (Array.isArray(row)?row:Object.values(row||{})).map(c => c ? (({_k,...rest})=>rest)(c) : {removed:true, open:false}));
+  if (gs.blockedCells) gs.blockedCells.forEach(k => {
+    const [r,c] = k.split(',').map(Number);
+    if (pyramid[r]&&pyramid[r][c]) { pyramid[r][c].blocked=true; blockedCells.add(k); }
+  });
+
+  // rawHands — точная копия из Firebase без маскировки.
+  // Только она пишется обратно в Firebase через pushGameState(),
+  // чтобы не затирать реальные карты чужих игроков замаскированными {hidden:true}.
+  if (gs.hands) {
+    rawHands = handsNorm.map(h => h.map(c=>({...c})));
+
+    if (myPlayerIndex < 0) {
+      hands = handsNorm.map(h => h.map(() => ({rank:'?',suit:'?',isJoker:false,hidden:true})));
+    } else {
+      const transferPhaseNow = gs.transferPhase || 'winner_give';
+      const middleIdxNow = gs.roundWinner !== undefined ? (gs.roundWinner+1) % pCount : -1;
+      hands = handsNorm.map((h,i) => {
+        if (i === myPlayerIndex) return h.map(c=>({...c}));
+        if (gs.phase === 'transfer' && transferPhaseNow === 'middle_give'
+            && i === middleIdxNow && myPlayerIndex === middleIdxNow) return h.map(c=>({...c}));
+        return h.map(() => ({rank:'?',suit:'?',isJoker:false,hidden:true}));
+      });
+    }
+  }
+
+  if (gs.kitty) kitty = gs.kitty.map(c=>({...c}));
+
+  if (gs.players) {
+    gs.players.forEach((gp,i) => {
+      if (players[i]) {
+        players[i].score     = gp.score;
+        players[i].skis      = gp.skis;
+        players[i].barrel    = gp.barrel;
+        players[i].barrelTry = gp.barrelTry;
+        players[i].bid       = gp.bid;
+        players[i].roundPts  = gp.roundPts;
+      }
+    });
+  }
+
+  if (gs.bidState && gamePhase === 'bid') {
+    bp = {
+      order:      gs.bidState.order,
+      pos:        gs.bidState.pos,
+      currentBid: gs.bidState.currentBid,
+      passer:     new Set(gs.bidState.passers||[])
+    };
+    applyBidUI();
+  }
+
+  if (gs.activePlayer !== myPlayerIndex) {
+    // Не наш ход — берём selectedCards из Firebase (для отображения хода другого игрока)
+    selectedCards = (gs.selectedCards || []).map(s => ({
+      source: s.source, r: s.r, c: s.c,
+      card: {rank: s.rank, suit: s.suit, isJoker: s.isJoker}
+    }));
+  } else if (lastKnownActivePlayer !== myPlayerIndex) {
+    // Ход только что перешёл к нам (в прошлом тике был чужой ход) —
+    // очищаем selectedCards, иначе там висят карты от предыдущего хода
+    selectedCards = [];
+  }
+  // Запоминаем activePlayer для следующего тика
+  lastKnownActivePlayer = gs.activePlayer !== undefined ? gs.activePlayer : -1;
+
+  renderPyramid();
+  renderHandsMultiplayer();
+  renderControls();
+  renderScoreboard();
+  updateProgress();
+  renderActiveCombo(gs);
+
+  // Управление панелью торга
+  if (gamePhase === 'bid' && bp) {
+    let pos = bp.pos;
+    while (pos < bp.order.length && bp.passer.has(bp.order[pos])) pos++;
+    if (pos >= bp.order.length) pos = 0;
+    const currentBidder = bp.order[pos];
+    const myTurn = currentBidder === myPlayerIndex;
+    applyBidUI();
+    if (myTurn) {
+      document.getElementById('bid-screen').classList.add('show');
+      document.getElementById('game-screen').classList.add('bid-open');
+    } else {
+      document.getElementById('bid-screen').classList.remove('show');
+      document.getElementById('game-screen').classList.remove('bid-open');
+      setStatus(`Торг · ставка ${bp.currentBid} · ходит ${players[currentBidder]?.name||''}`, 'info');
+    }
+  } else if (gamePhase !== 'bid') {
+    document.getElementById('bid-screen').classList.remove('show');
+    document.getElementById('game-screen').classList.remove('bid-open');
+  }
+
+  if (gamePhase === 'play') {
+    const isMyTurn = activePlayer === myPlayerIndex;
+    setStatus(isMyTurn ? `Ваш ход · вершина: ${topRank}` : `Ход: ${players[activePlayer]?.name} · вершина: ${topRank}`, isMyTurn?'good':'info');
+    document.getElementById('transfer-overlay').classList.remove('show');
+  }
+
+  if (gamePhase === 'poker' || gs.phase === 'poker') {
+    if (gs.pokerState) {
+      pokerPhase   = gs.pokerState.phase;
+      pokerPot     = gs.pokerState.pot || 0;
+      pokerBets    = gs.pokerState.bets || [];
+      pokerBetIdx  = gs.pokerState.betIdx || 0;
+      pokerCallAmt = gs.pokerState.callAmt || 0;
+      pokerTable   = gs.pokerState.table || [];
+      pokerBudgets = gs.pokerState.budgets || [];
+      if (pokerPhase === 'showdown') { pokerShowdown(); return; }
+      renderPokerUI();
+    }
+    return;
+  }
+
+  if (gamePhase === 'end' && gs.roundResults) {
+    const ov = document.getElementById('result-overlay');
+    if (!ov.classList.contains('show')) {
+      showResult(gs.roundResults.results, gs.roundResults.gameWinner);
+    }
+  }
+
+  if (gamePhase === 'transfer') {
+    const middleIdx = (roundWinner+1) % pCount;
+    const lastIdx   = (roundWinner+2) % pCount;
+    const transferPhase = gs.transferPhase || 'winner_give';
+
+    if (transferPhase === 'winner_give' && myPlayerIndex === roundWinner) {
+      if (!transferState || transferState.phase !== 'winner_give') {
+        if (gs.hands && gs.hands[roundWinner]) hands[roundWinner] = gs.hands[roundWinner].map(c=>({...c}));
+        transferState = { phase:'winner_give', winnerIdx:roundWinner, middleIdx, lastIdx, chosen:[] };
+        showTransferUI();
+      }
+    } else if (transferPhase === 'middle_give' && myPlayerIndex === middleIdx) {
+      const ov = document.getElementById('transfer-overlay');
+      if (!ov.classList.contains('show') || !transferState || transferState.phase !== 'middle_give') {
+        transferState = { phase:'middle_give', winnerIdx:roundWinner, middleIdx, lastIdx, chosen:[] };
+        showTransferUI();
+      }
+    } else {
+      document.getElementById('transfer-overlay').classList.remove('show');
+      transferState = null;
+      if (transferPhase === 'winner_give') setStatus(`${players[roundWinner]?.name} выбирает карты для передачи...`, 'info');
+      else setStatus(`${players[middleIdx]?.name} передаёт карту...`, 'info');
+    }
+  }
+}
+
+// ════════════════════════════════════════════
+//  ТОРГ В МУЛЬТИПЛЕЕРЕ
+// ════════════════════════════════════════════
+function applyBidUI() {
+  if (!bp) return;
+  const pidx = bp.order[bp.pos];
+  // Не сбрасываем myBidVal если игрок уже выставил значение выше минимума (+10)
+  // иначе polling каждые 2 сек затирает то что он накрутил кнопками +/-
+  const minBid = bp.currentBid + 10;
+  if (myBidVal <= bp.currentBid) myBidVal = minBid;
+  document.getElementById('bid-pname').textContent   = players[pidx]?.name || '—';
+  document.getElementById('bid-current').textContent = bp.currentBid===90?'Ставок ещё нет':`Текущая ставка: ${bp.currentBid}`;
+  const handEl = document.getElementById('bid-hand');
+  handEl.innerHTML = '';
+  if (pidx === myPlayerIndex && hands[pidx]) {
+    for (const card of hands[pidx]) handEl.appendChild(makeCardSimple(card));
+    document.getElementById('bid-matches').innerHTML = bidHints(pidx);
+  } else {
+    handEl.innerHTML = `<div style="font-style:italic;color:rgba(242,234,216,.3);font-size:.8rem">Карты скрыты</div>`;
+    document.getElementById('bid-matches').innerHTML = '';
+  }
+  document.getElementById('bid-val').textContent = myBidVal;
+  document.getElementById('bid-btn').textContent = `Ставка ${myBidVal}`;
+  const passNames = [...bp.passer].map(i=>players[i]?.name||'').filter(Boolean);
+  document.getElementById('bid-footer').textContent = passNames.length?'Пас: '+passNames.join(', '):'';
+}
+
+async function doBidMultiplayer() {
+  if (!myRoomCode) { doBid(); return; }
+  bp.currentBid = myBidVal;
+  bp.pos++;
+  await pushBidState();
+}
+
+async function doPassMultiplayer() {
+  if (!myRoomCode) { doPass(); return; }
+  bp.passer.add(bp.order[bp.pos]);
+  bp.pos++;
+  await pushBidState();
+}
+
+async function pushBidState() {
+  const active = bp.order.filter(i=>!bp.passer.has(i));
+  if (active.length <= 1) { await finishBiddingMultiplayer(active.length===1?active[0]:bp.order[0]); return; }
+  while (bp.pos < bp.order.length && bp.passer.has(bp.order[bp.pos])) bp.pos++;
+  if (bp.pos >= bp.order.length) {
+    bp.pos = 0;
+    while (bp.pos < bp.order.length && bp.passer.has(bp.order[bp.pos])) bp.pos++;
+  }
+  try {
+    await fbUpdate('rooms/' + myRoomCode, {
+      'gameState/bidState': { order:bp.order, pos:bp.pos, currentBid:bp.currentBid, passers:[...bp.passer] },
+      'gameState/updatedAt': Date.now()
+    });
+  } catch(e) { console.error('pushBidState error:', e); }
+}
+
+async function finishBiddingMultiplayer(winnerIdx) {
+  roundWinner = winnerIdx;
+  roundBid = Math.max(bp.currentBid, 100);
+  players[winnerIdx].bid = roundBid;
+
+  const gsSnap = await fbGet('rooms/' + myRoomCode + '/gameState');
+  const gs = gsSnap.val();
+  const realHands = toArr(gs.hands).map(h => toArr(h));
+  const realKitty = toArr(gs.kitty);
+
+  const newWinnerHand = [...realHands[winnerIdx], ...realKitty];
+  const handsUpdate = realHands.map((h,i) => i === winnerIdx ? newWinnerHand : [...h]);
+
+  const playersUpdate = players.map(p=>({
+    name:p.name, score:p.score, skis:p.skis, barrel:p.barrel,
+    barrelTry:p.barrelTry, bid:p.bid, roundPts:p.roundPts
+  }));
+  playersUpdate[winnerIdx].bid = roundBid;
+
+  let nextPhase = pCount===3 ? 'transfer' : 'play';
+  if (pCount === 4) {
+    for (let i=0; i<pCount; i++)
+      if (i !== winnerIdx) handsUpdate[i] = [...(handsUpdate[i]||[]), makeJoker()];
+  }
+
+  try {
+    await fbUpdate('rooms/' + myRoomCode, {
+      'gameState/phase': nextPhase,
+      'gameState/roundWinner': winnerIdx,
+      'gameState/roundBid': roundBid,
+      'gameState/activePlayer': winnerIdx,
+      'gameState/kitty': [],
+      'gameState/hands': handsUpdate,
+      'gameState/players': playersUpdate,
+      'gameState/updatedAt': Date.now()
+    });
+  } catch(e) { console.error('finishBidding error:', e); }
+}
+
+// ════════════════════════════════════════════
+//  РЕНДЕР РУК В МУЛЬТИПЛЕЕРЕ
+// ════════════════════════════════════════════
+function renderHandsMultiplayer() {
+  const bz = document.getElementById('bottom-zone');
+  bz.innerHTML = '';
+  for (let i=0; i<pCount; i++) {
+    const wrap = document.createElement('div'); wrap.className = 'zone-wrap';
+    const lbl  = document.createElement('div'); lbl.className  = 'zone-label';
+    lbl.textContent = players[i]?.name + (i===activePlayer&&gamePhase==='play'?' ✦':'') + (i===myPlayerIndex?' (вы)':'');
+    const hc = document.createElement('div'); hc.className = 'hand-cards';
+    const h = hands[i] || [];
+    if (i === myPlayerIndex) {
+      const isWinner = (i === roundWinner && gamePhase === 'transfer');
+      if (isWinner && h.length > 2) {
+        const myCards    = h.slice(0, 2);
+        const kittyCards = h.slice(2);
+        myCards.forEach((card,j) => hc.appendChild(makeHandCard(card,i,j,true)));
+        const spacer = document.createElement('div'); spacer.style.cssText = 'width:20px;flex-shrink:0;';
+        hc.appendChild(spacer);
+        kittyCards.forEach((card,j) => hc.appendChild(makeHandCard(card,i,j+2,true)));
+      } else {
+        h.forEach((card,j) => hc.appendChild(makeHandCard(card,i,j,true)));
+      }
+    } else {
+      const count = h.filter(c=>c).length || 0;
+      for (let j=0; j<count; j++) {
+        const div = document.createElement('div');
+        div.className = 'card face-down';
+        div.innerHTML = '<div class="card-inner"></div>';
+        hc.appendChild(div);
+      }
+      if (count === 0) lbl.style.color = 'rgba(242,234,216,.2)';
+    }
+    wrap.appendChild(lbl); wrap.appendChild(hc); bz.appendChild(wrap);
+  }
+}
+
+function renderActiveCombo(gs) {
+  let el = document.getElementById('active-combo-display');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'active-combo-display';
+    el.style.cssText = 'text-align:center;padding:4px 14px;font-family:"Playfair Display",serif;font-size:.82rem;color:var(--gold2);letter-spacing:.07em;min-height:24px;';
+    const pyrEl = document.getElementById('pyramid');
+    pyrEl.parentNode.insertBefore(el, pyrEl);
+  }
+  if (!gs || !gs.activeCombo || !gs.activeCombo.combo) { el.innerHTML = '&nbsp;'; return; }
+  const ac = gs.activeCombo;
+  const pname = players[gs.activePlayer]?.name || '?';
+  el.textContent = `${pname} · ${CNAME[ac.combo]} · ${CSCORE[ac.combo]} очков`;
+}
+
+async function pushGameState() {
+  if (!myRoomCode) return;
+  const update = {
+    'gameState/pyramid':       pyramid.map(row => row.map(c=>({...c, _k:1}))),  // _k:1 защищает от удаления Firebase
+    'gameState/hands':         rawHands.map(h => h.map(c=>({...c}))),  // rawHands — реальные карты, не маскированные
+    'gameState/phase':         gamePhase,
+    'gameState/activePlayer':  activePlayer,
+    'gameState/roundWinner':   roundWinner,
+    'gameState/roundBid':      roundBid,
+    'gameState/topRank':       topRank,
+    'gameState/blockedCells':  [...blockedCells],
+    'gameState/players':       players.map(p=>({name:p.name,score:p.score,skis:p.skis,barrel:p.barrel,barrelTry:p.barrelTry,bid:p.bid,roundPts:p.roundPts})),
+    'gameState/selectedCards': selectedCards.map(s=>({source:s.source,r:s.r,c:s.c,rank:s.card?.rank,suit:s.card?.suit,isJoker:s.card?.isJoker})),
+    'gameState/activeCombo':   updateComboForBroadcast(),
+    'gameState/roundResults':  null,
+    'gameState/updatedAt':     Date.now()
+  };
+  try { await fbUpdate('rooms/' + myRoomCode, update); }
+  catch(e) { console.error('pushGameState error:', e); }
+}
+
+function updateComboForBroadcast() {
+  if (!selectedCards.length) return null;
+  const combo = detectCombo(selectedCards.map(s=>s.card));
+  if (!combo) return null;
+  return { combo, pts: CSCORE[combo] };
+}
+
+async function leaveLobby() {
+  if (myRoomCode && myPlayerId) {
+    fbOffValue('rooms/' + myRoomCode);
+    await fbRemove('rooms/' + myRoomCode + '/players/' + myPlayerId);
+    if (isHost) await fbRemove('rooms/' + myRoomCode);
+  }
+  myRoomCode = null; myPlayerId = null; isHost = false;
+  document.getElementById('lobby-create-box').style.display = 'flex';
+  document.getElementById('lobby-wait-box').style.display   = 'none';
+  document.getElementById('lobby-join-code').value = '';
+  setLobbyStatus('');
+}
+
+showLobby();
+</script>
+  <div style="position:fixed;bottom:8px;right:12px;font-size:.65rem;opacity:.3;color:#C8A84B;pointer-events:none;z-index:999;font-family:'Playfair Display',serif;letter-spacing:.05em">v0.6.2</div>
+</body>
+</html>
