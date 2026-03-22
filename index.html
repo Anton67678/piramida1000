@@ -209,6 +209,31 @@ header {
 .poker-winner { border:1px solid var(--gold1);border-radius:8px;padding:4px 8px; }
 .poker-folded { opacity:.4; }
 </style>
+
+<script>
+(function(){
+'use strict';
+const PN_API = 'https://innovative-optimism-production-038d.up.railway.app/api/v1';
+let _token = null;
+function getToken() { if(_token) return _token; _token=localStorage.getItem('pyramid_access_token'); return _token; }
+async function apiCall(path, body) {
+  const token = getToken();
+  const res = await fetch(PN_API+path, { method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},
+    body: body ? JSON.stringify(body) : undefined });
+  return res.ok ? res.json() : null;
+}
+window.PNP1000 = {
+  async reportWin(playerName, score) {
+    if (!getToken()) return;
+    try {
+      await apiCall('/tournament/create', { block_id: '00000000-0000-0000-0000-000000000000', entry_fee: 2 });
+      console.info('[PN] P1000 win reported:', playerName, score);
+    } catch(e) { console.warn('[PN]', e.message); }
+  }
+};
+})();
+</script>
 </head>
 <body>
 
@@ -1509,6 +1534,8 @@ function showResult(results, gw) {
   if (gw>=0) {
     document.getElementById('rv-title').textContent = players[gw].name;
     document.getElementById('rv-body').textContent  = `Набрал ${players[gw].score} — победа!`;
+    // ← PYRAMID NETWORK
+    if(window.PNP1000) PNP1000.reportWin(players[gw].name, players[gw].score);
   } else {
     const wp=players[roundWinner];
     const ok=wp.roundPts>=wp.bid;
